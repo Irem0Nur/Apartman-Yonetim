@@ -1,9 +1,27 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+
+from config import Config
+from extensions import db, migrate
+from models import User, Apartment, Unit, Resident
+from routes.auth import auth_bp
+from routes.apartments import apartments_bp
+
 
 app = Flask(__name__)
 
+app.config.from_object(Config)
+
 CORS(app)
+
+db.init_app(app)
+migrate.init_app(app, db)
+
+jwt = JWTManager(app)
+
+app.register_blueprint(auth_bp)
+app.register_blueprint(apartments_bp)
 
 
 @app.route("/")
@@ -17,9 +35,12 @@ def home():
 def health():
     return jsonify({
         "status": "ok",
-        "message": "Backend bağlantısı başarılı"
+        "database": "connected"
     })
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(
+        debug=True,
+        port=5000
+    )
