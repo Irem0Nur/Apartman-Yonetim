@@ -949,3 +949,37 @@ input {
   opacity: 0.5;
   cursor: not-allowed;
 }
+.unit-person-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.unit-person-list span {
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+}
+
+.unit-person-empty {
+  font-size: 12px;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.unit-tenant-note {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.unit-occupancy-info {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}

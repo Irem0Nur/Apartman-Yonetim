@@ -34,26 +34,56 @@ def get_units(apartment_id):
             "message": "Apartman bulunamadı"
         }), 404
 
-    units = Unit.query.filter_by(
-        apartment_id=apartment_id
-    ).order_by(
-        Unit.block_name.asc(),
-        Unit.unit_number.asc()
-    ).all()
+    units = (
+        Unit.query
+        .filter_by(apartment_id=apartment_id)
+        .order_by(
+            Unit.block_name.asc(),
+            Unit.unit_number.asc()
+        )
+        .all()
+    )
 
-    return jsonify([
-        {
+    result = []
+
+    for unit in units:
+        active_relations = [
+            relation
+            for relation in unit.person_relations
+            if relation.is_active
+        ]
+
+        owners = [
+            relation.person.full_name
+            for relation in active_relations
+            if relation.relationship_type == "owner"
+        ]
+
+        tenants = [
+            relation.person.full_name
+            for relation in active_relations
+            if relation.relationship_type == "tenant"
+        ]
+
+        residents = [
+            relation.person.full_name
+            for relation in active_relations
+            if relation.is_resident
+        ]
+
+        result.append({
             "id": unit.id,
             "unit_number": unit.unit_number,
             "block_name": unit.block_name,
             "floor": unit.floor,
-            "due_amount": float(
-                unit.due_amount or 0
-            ),
-            "is_occupied": unit.is_occupied,
-        }
-        for unit in units
-    ]), 200
+            "due_amount": float(unit.due_amount or 0),
+            "is_occupied": len(residents) > 0,
+            "owners": owners,
+            "tenants": tenants,
+            "residents": residents,
+        })
+
+    return jsonify(result), 200
 
 
 @units_bp.route("", methods=["POST"])
@@ -119,17 +149,13 @@ def create_unit():
             "Kat veya aidat bilgisini kontrol edin"
         }), 400
 
-    is_occupied = bool(
-        data.get("is_occupied", True)
-    )
-
     unit = Unit(
         apartment_id=apartment_id,
         unit_number=unit_number,
         block_name=block_name,
         floor=floor,
         due_amount=due_amount,
-        is_occupied=is_occupied,
+        is_occupied=False,
     )
 
     db.session.add(unit)
@@ -142,10 +168,11 @@ def create_unit():
             "unit_number": unit.unit_number,
             "block_name": unit.block_name,
             "floor": unit.floor,
-            "due_amount": float(
-                unit.due_amount or 0
-            ),
-            "is_occupied": unit.is_occupied,
+            "due_amount": float(unit.due_amount or 0),
+            "is_occupied": False,
+            "owners": [],
+            "tenants": [],
+            "residents": [],
         }
     }), 201
 
@@ -241,11 +268,33 @@ def update_unit(unit_id):
             "Kat veya aidat bilgisini kontrol edin"
         }), 400
 
-    if "is_occupied" in data:
-        unit.is_occupied = bool(
-            data["is_occupied"]
-        )
+    db.session.commit()
 
+    active_relations = [
+        relation
+        for relation in unit.person_relations
+        if relation.is_active
+    ]
+
+    owners = [
+        relation.person.full_name
+        for relation in active_relations
+        if relation.relationship_type == "owner"
+    ]
+
+    tenants = [
+        relation.person.full_name
+        for relation in active_relations
+        if relation.relationship_type == "tenant"
+    ]
+
+    residents = [
+        relation.person.full_name
+        for relation in active_relations
+        if relation.is_resident
+    ]
+
+    unit.is_occupied = len(residents) > 0
     db.session.commit()
 
     return jsonify({
@@ -255,10 +304,11 @@ def update_unit(unit_id):
             "unit_number": unit.unit_number,
             "block_name": unit.block_name,
             "floor": unit.floor,
-            "due_amount": float(
-                unit.due_amount or 0
-            ),
+            "due_amount": float(unit.due_amount or 0),
             "is_occupied": unit.is_occupied,
+            "owners": owners,
+            "tenants": tenants,
+            "residents": residents,
         }
     }), 200
 

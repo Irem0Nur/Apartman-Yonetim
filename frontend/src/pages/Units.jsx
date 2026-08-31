@@ -26,7 +26,6 @@ function Units() {
     block_name: "",
     floor: "",
     due_amount: "",
-    is_occupied: true,
   });
 
   useEffect(() => {
@@ -47,7 +46,6 @@ function Units() {
         }
 
         const selectedApartment = apartments[0];
-
         setApartment(selectedApartment);
 
         const unitData = await getUnits(
@@ -82,7 +80,6 @@ function Units() {
       block_name: "",
       floor: "",
       due_amount: apartment?.default_due_amount || "",
-      is_occupied: true,
     });
 
     setError("");
@@ -97,7 +94,6 @@ function Units() {
       block_name: unit.block_name || "",
       floor: unit.floor ?? "",
       due_amount: unit.due_amount ?? "",
-      is_occupied: Boolean(unit.is_occupied),
     });
 
     setError("");
@@ -111,11 +107,11 @@ function Units() {
   }
 
   function handleChange(event) {
-    const { name, value, type, checked } = event.target;
+    const { name, value } = event.target;
 
     setForm((previous) => ({
       ...previous,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: value,
     }));
   }
 
@@ -152,7 +148,6 @@ function Units() {
         block_name: form.block_name.trim(),
         floor: form.floor,
         due_amount: form.due_amount,
-        is_occupied: form.is_occupied,
       };
 
       if (editingUnit) {
@@ -199,6 +194,26 @@ function Units() {
     }
   }
 
+  function renderPeopleList(people, emptyText) {
+    if (!people || people.length === 0) {
+      return (
+        <span className="unit-person-empty">
+          {emptyText}
+        </span>
+      );
+    }
+
+    return (
+      <div className="unit-person-list">
+        {people.map((person, index) => (
+          <span key={`${person}-${index}`}>
+            {person}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
   if (loading) {
     return (
       <div className="loading">
@@ -241,13 +256,11 @@ function Units() {
           </button>
 
           <button
-  className="menu-item"
-  onClick={() =>
-    navigate("/kisiler")
-  }
->
-  👥 Kişiler
-</button>
+            className="menu-item"
+            onClick={() => navigate("/kisiler")}
+          >
+            👥 Kişiler
+          </button>
 
           <div className="menu-title">
             FİNANS
@@ -290,13 +303,8 @@ function Units() {
       <main className="main-content">
         <header className="units-header">
           <div>
-            <h1>
-              Daireler
-            </h1>
-
-            <p>
-              {apartment?.name}
-            </p>
+            <h1>Daireler</h1>
+            <p>{apartment?.name}</p>
           </div>
 
           <button
@@ -309,20 +317,12 @@ function Units() {
 
         <section className="units-summary">
           <div className="mini-stat">
-            <span>
-              Toplam Daire
-            </span>
-
-            <strong>
-              {units.length}
-            </strong>
+            <span>Toplam Daire</span>
+            <strong>{units.length}</strong>
           </div>
 
           <div className="mini-stat">
-            <span>
-              Dolu
-            </span>
-
+            <span>Dolu</span>
             <strong>
               {
                 units.filter(
@@ -333,10 +333,7 @@ function Units() {
           </div>
 
           <div className="mini-stat">
-            <span>
-              Boş
-            </span>
-
+            <span>Boş</span>
             <strong>
               {
                 units.filter(
@@ -350,18 +347,15 @@ function Units() {
         <section className="panel units-panel">
           {units.length === 0 ? (
             <div className="empty-dashboard-state">
-              <span>
-                🚪
-              </span>
+              <span>🚪</span>
 
               <strong>
                 Henüz daire eklenmedi
               </strong>
 
               <p>
-                Apartmanınızdaki daireleri
-                sisteme ekleyerek yönetmeye
-                başlayabilirsiniz.
+                Apartmanınızdaki daireleri sisteme
+                ekleyerek yönetmeye başlayabilirsiniz.
               </p>
 
               <button
@@ -376,29 +370,14 @@ function Units() {
               <table className="units-table">
                 <thead>
                   <tr>
-                    <th>
-                      Blok
-                    </th>
-
-                    <th>
-                      Daire
-                    </th>
-
-                    <th>
-                      Kat
-                    </th>
-
-                    <th>
-                      Aidat
-                    </th>
-
-                    <th>
-                      Durum
-                    </th>
-
-                    <th>
-                      İşlemler
-                    </th>
+                    <th>Blok</th>
+                    <th>Daire</th>
+                    <th>Kat</th>
+                    <th>Malik</th>
+                    <th>Oturan / Kiracı</th>
+                    <th>Aidat</th>
+                    <th>Durum</th>
+                    <th>İşlemler</th>
                   </tr>
                 </thead>
 
@@ -417,6 +396,27 @@ function Units() {
 
                       <td>
                         {unit.floor ?? "-"}
+                      </td>
+
+                      <td>
+                        {renderPeopleList(
+                          unit.owners,
+                          "Malik eklenmedi"
+                        )}
+                      </td>
+
+                      <td>
+                        {renderPeopleList(
+                          unit.residents,
+                          "Oturan yok"
+                        )}
+
+                        {unit.tenants?.length > 0 && (
+                          <div className="unit-tenant-note">
+                            Kiracı:{" "}
+                            {unit.tenants.join(", ")}
+                          </div>
+                        )}
                       </td>
 
                       <td>
@@ -480,9 +480,7 @@ function Units() {
                     : "Yeni Daire"}
                 </h2>
 
-                <p>
-                  {apartment?.name}
-                </p>
+                <p>{apartment?.name}</p>
               </div>
 
               <button
@@ -497,9 +495,7 @@ function Units() {
             <form onSubmit={handleSubmit}>
               <div className="setup-row">
                 <div className="form-group">
-                  <label>
-                    Blok Adı
-                  </label>
+                  <label>Blok Adı</label>
 
                   <input
                     type="text"
@@ -511,9 +507,7 @@ function Units() {
                 </div>
 
                 <div className="form-group">
-                  <label>
-                    Daire Numarası *
-                  </label>
+                  <label>Daire Numarası *</label>
 
                   <input
                     type="text"
@@ -528,9 +522,7 @@ function Units() {
 
               <div className="setup-row">
                 <div className="form-group">
-                  <label>
-                    Kat
-                  </label>
+                  <label>Kat</label>
 
                   <input
                     type="number"
@@ -542,9 +534,7 @@ function Units() {
                 </div>
 
                 <div className="form-group">
-                  <label>
-                    Aylık Aidat
-                  </label>
+                  <label>Aylık Aidat</label>
 
                   <div className="money-input">
                     <input
@@ -557,25 +547,16 @@ function Units() {
                       placeholder="1000"
                     />
 
-                    <span>
-                      TL
-                    </span>
+                    <span>TL</span>
                   </div>
                 </div>
               </div>
 
-              <label className="checkbox-field">
-                <input
-                  type="checkbox"
-                  name="is_occupied"
-                  checked={form.is_occupied}
-                  onChange={handleChange}
-                />
-
-                <span>
-                  Daire şu anda dolu
-                </span>
-              </label>
+              <div className="unit-occupancy-info">
+                Dairenin dolu/boş durumu artık Kişiler
+                bölümündeki aktif oturan kayıtlarına göre
+                otomatik belirlenir.
+              </div>
 
               {error && (
                 <div className="error-message">
