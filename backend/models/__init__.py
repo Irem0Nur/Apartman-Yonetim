@@ -2,3 +2,5 @@ from .user import User
 from .apartment import Apartment
 from .unit import Unit
 from .resident import Resident
+from .person import Person
+from .unit_person import UnitPerson

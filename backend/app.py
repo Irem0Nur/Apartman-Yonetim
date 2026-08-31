@@ -7,7 +7,8 @@ from extensions import db, migrate
 from models import User, Apartment, Unit, Resident
 from routes.auth import auth_bp
 from routes.apartments import apartments_bp
-
+from routes.units import units_bp
+from routes.people import people_bp
 
 app = Flask(__name__)
 
@@ -22,6 +23,8 @@ jwt = JWTManager(app)
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(apartments_bp)
+app.register_blueprint(units_bp)
+app.register_blueprint(people_bp)
 
 
 @app.route("/")

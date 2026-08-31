@@ -85,13 +85,18 @@ function Dashboard() {
             🏢 Apartman Bilgileri
           </button>
 
-          <button className="menu-item">
+         <button className="menu-item" onClick={() =>  navigate("/daireler")}>
             🚪 Daireler
-          </button>
+        </button>
 
-          <button className="menu-item">
-            👥 Kişiler
-          </button>
+      <button
+  className="menu-item"
+  onClick={() =>
+    navigate("/kisiler")
+  }
+>
+  👥 Kişiler
+</button>
 
           <div className="menu-title">FİNANS</div>
 

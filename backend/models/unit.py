@@ -5,7 +5,10 @@ from extensions import db
 class Unit(db.Model):
     __tablename__ = "units"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
 
     apartment_id = db.Column(
         db.Integer,
@@ -18,13 +21,13 @@ class Unit(db.Model):
         nullable=False
     )
 
-    floor = db.Column(
-        db.Integer,
+    block_name = db.Column(
+        db.String(50),
         nullable=True
     )
 
-    gross_area = db.Column(
-        db.Numeric(10, 2),
+    floor = db.Column(
+        db.Integer,
         nullable=True
     )
 
@@ -50,6 +53,12 @@ class Unit(db.Model):
 
     residents = db.relationship(
         "Resident",
+        back_populates="unit",
+        cascade="all, delete-orphan"
+    )
+
+    person_relations = db.relationship(
+        "UnitPerson",
         back_populates="unit",
         cascade="all, delete-orphan"
     )

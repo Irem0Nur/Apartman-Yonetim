@@ -19,3 +19,18 @@ frontend/dist/
 # OS
 .DS_Store
 Thumbs.db
+# Local database
+*.db
+backend/instance/
+
+# Environment
+.env
+*.env
+
+# Python virtual environment
+venv/
+backend/venv/
+
+# Frontend dependencies
+node_modules/
+frontend/node_modules/
