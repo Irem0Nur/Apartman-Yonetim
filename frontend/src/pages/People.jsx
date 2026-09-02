@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Sidebar from "../components/Sidebar";
 
 import {
   getApartments,
@@ -407,107 +408,7 @@ function People() {
   return (
     <div className="app-layout">
 
-      <aside className="sidebar">
-
-        <div className="sidebar-logo">
-
-          <div className="sidebar-logo-icon">
-            AY
-          </div>
-
-          <span>
-            ApartmanYönet
-          </span>
-
-        </div>
-
-
-        <nav className="sidebar-menu">
-
-          <button
-            className="menu-item"
-            onClick={() =>
-              navigate("/dashboard")
-            }
-          >
-            🏠 Dashboard
-          </button>
-
-
-          <div className="menu-title">
-            APARTMAN
-          </div>
-
-
-          <button className="menu-item">
-            🏢 Apartman Bilgileri
-          </button>
-
-
-          <button
-            className="menu-item"
-            onClick={() =>
-              navigate("/daireler")
-            }
-          >
-            🚪 Daireler
-          </button>
-
-
-          <button
-            className="menu-item active"
-          >
-            👥 Kişiler
-          </button>
-
-
-          <div className="menu-title">
-            FİNANS
-          </div>
-
-
-          <button className="menu-item">
-            💳 Aidatlar
-          </button>
-
-
-          <button className="menu-item">
-            💰 Ödemeler
-          </button>
-
-
-          <button className="menu-item">
-            📉 Gelir / Gider
-          </button>
-
-
-          <button className="menu-item">
-            🏦 Kasa
-          </button>
-
-
-          <div className="menu-title">
-            YÖNETİM
-          </div>
-
-
-          <button className="menu-item">
-            📒 Karar Defteri
-          </button>
-
-
-          <button className="menu-item">
-            📅 Toplantılar
-          </button>
-
-
-          <button className="menu-item">
-            ✅ Yapılacaklar
-          </button>
-
-        </nav>
-
-      </aside>
+      <Sidebar active="people" />
 
 
       <main className="main-content">

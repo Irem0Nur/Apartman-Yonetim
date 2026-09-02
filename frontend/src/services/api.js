@@ -34,6 +34,7 @@ export async function getCurrentUser(token) {
 
   return response.json();
 }
+
 export async function register(name, email, password) {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
@@ -55,6 +56,7 @@ export async function register(name, email, password) {
 
   return data;
 }
+
 export async function getApartments(token) {
   const response = await fetch(
     `${API_URL}/apartments`,
@@ -76,18 +78,15 @@ export async function getApartments(token) {
   return data;
 }
 
-
 export async function createApartment(token, apartment) {
   const response = await fetch(
     `${API_URL}/apartments`,
     {
       method: "POST",
-
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-
       body: JSON.stringify(apartment),
     }
   );
@@ -102,6 +101,7 @@ export async function createApartment(token, apartment) {
 
   return data;
 }
+
 export async function getUnits(token, apartmentId) {
   const response = await fetch(
     `${API_URL}/units/apartment/${apartmentId}`,
@@ -115,7 +115,9 @@ export async function getUnits(token, apartmentId) {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || "Daireler alınamadı");
+    throw new Error(
+      data.message || "Daireler alınamadı"
+    );
   }
 
   return data;
@@ -134,51 +136,61 @@ export async function createUnit(token, unit) {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || "Daire oluşturulamadı");
+    throw new Error(
+      data.message || "Daire oluşturulamadı"
+    );
   }
 
   return data;
 }
 
 export async function updateUnit(token, unitId, unit) {
-  const response = await fetch(`${API_URL}/units/${unitId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(unit),
-  });
+  const response = await fetch(
+    `${API_URL}/units/${unitId}`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(unit),
+    }
+  );
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || "Daire güncellenemedi");
+    throw new Error(
+      data.message || "Daire güncellenemedi"
+    );
   }
 
   return data;
 }
 
 export async function deleteUnit(token, unitId) {
-  const response = await fetch(`${API_URL}/units/${unitId}`, {
-    method: "DELETE",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+  const response = await fetch(
+    `${API_URL}/units/${unitId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.message || "Daire silinemedi");
+    throw new Error(
+      data.message || "Daire silinemedi"
+    );
   }
 
   return data;
 }
-export async function getPeople(
-  token,
-  apartmentId
-) {
+
+export async function getPeople(token, apartmentId) {
   const response = await fetch(
     `${API_URL}/people/apartment/${apartmentId}`,
     {
@@ -192,32 +204,22 @@ export async function getPeople(
 
   if (!response.ok) {
     throw new Error(
-      data.message ||
-      "Kişiler alınamadı"
+      data.message || "Kişiler alınamadı"
     );
   }
 
   return data;
 }
 
-
-export async function createPerson(
-  token,
-  person
-) {
+export async function createPerson(token, person) {
   const response = await fetch(
     `${API_URL}/people`,
     {
       method: "POST",
-
       headers: {
-        "Content-Type":
-          "application/json",
-
-        Authorization:
-          `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-
       body: JSON.stringify(person),
     }
   );
@@ -226,14 +228,12 @@ export async function createPerson(
 
   if (!response.ok) {
     throw new Error(
-      data.message ||
-      "Kişi eklenemedi"
+      data.message || "Kişi eklenemedi"
     );
   }
 
   return data;
 }
-
 
 export async function updatePerson(
   token,
@@ -244,15 +244,10 @@ export async function updatePerson(
     `${API_URL}/people/${relationId}`,
     {
       method: "PUT",
-
       headers: {
-        "Content-Type":
-          "application/json",
-
-        Authorization:
-          `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-
       body: JSON.stringify(person),
     }
   );
@@ -261,14 +256,12 @@ export async function updatePerson(
 
   if (!response.ok) {
     throw new Error(
-      data.message ||
-      "Kişi güncellenemedi"
+      data.message || "Kişi güncellenemedi"
     );
   }
 
   return data;
 }
-
 
 export async function deletePerson(
   token,
@@ -278,10 +271,8 @@ export async function deletePerson(
     `${API_URL}/people/${relationId}`,
     {
       method: "DELETE",
-
       headers: {
-        Authorization:
-          `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
     }
   );
@@ -290,8 +281,154 @@ export async function deletePerson(
 
   if (!response.ok) {
     throw new Error(
-      data.message ||
-      "Kişi silinemedi"
+      data.message || "Kişi silinemedi"
+    );
+  }
+
+  return data;
+}
+
+export async function getDues(
+  token,
+  apartmentId,
+  year,
+  month
+) {
+  const params = new URLSearchParams();
+
+  if (year) {
+    params.set("year", year);
+  }
+
+  if (month) {
+    params.set("month", month);
+  }
+
+  const response = await fetch(
+    `${API_URL}/dues/apartment/${apartmentId}?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Aidatlar alınamadı"
+    );
+  }
+
+  return data;
+}
+
+export async function generateDues(
+  token,
+  apartmentId,
+  year,
+  month
+) {
+  const response = await fetch(
+    `${API_URL}/dues/generate`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        apartment_id: apartmentId,
+        year,
+        month,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Aidatlar oluşturulamadı"
+    );
+  }
+
+  return data;
+}
+
+export async function getDuePayments(token, dueId) {
+  const response = await fetch(
+    `${API_URL}/payments/due/${dueId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Ödemeler alınamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function createPayment(
+  token,
+  payment
+) {
+  const response = await fetch(
+    `${API_URL}/payments`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify(payment),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Ödeme kaydedilemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function deletePayment(
+  token,
+  paymentId
+) {
+  const response = await fetch(
+    `${API_URL}/payments/${paymentId}`,
+    {
+      method: "DELETE",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Ödeme silinemedi"
     );
   }
 

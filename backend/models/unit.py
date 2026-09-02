@@ -62,3 +62,9 @@ class Unit(db.Model):
         back_populates="unit",
         cascade="all, delete-orphan"
     )
+
+    dues = db.relationship(
+    "Due",
+    back_populates="unit",
+    cascade="all, delete-orphan"
+)

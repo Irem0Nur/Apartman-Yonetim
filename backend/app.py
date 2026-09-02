@@ -9,6 +9,8 @@ from routes.auth import auth_bp
 from routes.apartments import apartments_bp
 from routes.units import units_bp
 from routes.people import people_bp
+from routes.dues import dues_bp
+from routes.payments import payments_bp
 
 app = Flask(__name__)
 
@@ -25,6 +27,8 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(apartments_bp)
 app.register_blueprint(units_bp)
 app.register_blueprint(people_bp)
+app.register_blueprint(dues_bp)
+app.register_blueprint(payments_bp)
 
 
 @app.route("/")
