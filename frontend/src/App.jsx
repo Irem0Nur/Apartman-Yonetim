@@ -12,10 +12,13 @@ import ApartmentInfo from "./pages/ApartmentInfo";
 import Units from "./pages/Units";
 import People from "./pages/People";
 import Dues from "./pages/Dues";
+import Payments from "./pages/Payments";
+
 
 function App() {
   return (
     <BrowserRouter>
+
       <Routes>
 
         <Route
@@ -58,9 +61,16 @@ function App() {
           element={<Dues />}
         />
 
+        <Route
+          path="/odemeler"
+          element={<Payments />}
+        />
+
       </Routes>
+
     </BrowserRouter>
   );
 }
+
 
 export default App;

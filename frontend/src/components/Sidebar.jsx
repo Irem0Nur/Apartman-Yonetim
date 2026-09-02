@@ -65,14 +65,16 @@ function Sidebar({ active }) {
         >
           💳 Aidatlar
         </button>
-
         <button
-          className={menuClass("payments")}
-          disabled
-          title="Yakında eklenecek"
-        >
-          💰 Ödemeler
+          className={`menu-item ${
+           active === "payments" ? "active" : ""
+         }`}
+        onClick={() => navigate("/odemeler")}
+>
+          🕒 Ödemeler
         </button>
+          
+        
 
         <button
           className={menuClass("income-expense")}

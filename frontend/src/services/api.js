@@ -434,3 +434,51 @@ export async function deletePayment(
 
   return data;
 }
+export async function getPayments(token, apartmentId, year, month) {
+  const params = new URLSearchParams();
+
+  if (year) params.append("year", year);
+  if (month) params.append("month", month);
+
+  const response = await fetch(
+    `${API_URL}/payments/apartment/${apartmentId}?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Ödemeler alınamadı");
+  }
+
+  return data;
+}
+
+export async function getYearlyPaymentReport(
+  token,
+  apartmentId,
+  year
+) {
+  const response = await fetch(
+    `${API_URL}/payments/yearly-report/${apartmentId}?year=${year}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Yıllık ödeme raporu alınamadı"
+    );
+  }
+
+  return data;
+}
