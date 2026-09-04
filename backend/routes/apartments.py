@@ -100,3 +100,115 @@ def create_apartment():
             )
         }
     }), 201
+@apartments_bp.route(
+    "/<int:apartment_id>",
+    methods=["PUT"]
+)
+@jwt_required()
+def update_apartment(apartment_id):
+    user_id = int(get_jwt_identity())
+    data = request.get_json() or {}
+
+    apartment = Apartment.query.filter_by(
+        id=apartment_id,
+        manager_id=user_id
+    ).first()
+
+    if not apartment:
+        return jsonify({
+            "message": "Apartman bulunamadı veya yetkiniz yok"
+        }), 404
+
+    name = str(
+        data.get("name", apartment.name)
+    ).strip()
+
+    address = str(
+        data.get(
+            "address",
+            apartment.address or ""
+        )
+    ).strip()
+
+    if not name:
+        return jsonify({
+            "message": "Apartman adı zorunludur"
+        }), 400
+
+    try:
+        block_count = int(
+            data.get(
+                "block_count",
+                apartment.block_count or 1
+            )
+        )
+
+        floor_count = int(
+            data.get(
+                "floor_count",
+                apartment.floor_count or 0
+            )
+        )
+
+        unit_count = int(
+            data.get(
+                "unit_count",
+                apartment.unit_count or 0
+            )
+        )
+
+        default_due_amount = float(
+            data.get(
+                "default_due_amount",
+                apartment.default_due_amount or 0
+            )
+        )
+
+    except (TypeError, ValueError):
+        return jsonify({
+            "message": "Sayısal alanları kontrol edin"
+        }), 400
+
+    if block_count < 1:
+        return jsonify({
+            "message": "Blok sayısı en az 1 olmalıdır"
+        }), 400
+
+    if (
+        floor_count < 0
+        or unit_count < 0
+        or default_due_amount < 0
+    ):
+        return jsonify({
+            "message": "Değerler negatif olamaz"
+        }), 400
+
+    apartment.name = name
+    apartment.address = address or None
+    apartment.block_count = block_count
+    apartment.floor_count = (
+        floor_count or None
+    )
+    apartment.unit_count = (
+        unit_count or None
+    )
+    apartment.default_due_amount = (
+        default_due_amount
+    )
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Apartman bilgileri güncellendi",
+        "apartment": {
+            "id": apartment.id,
+            "name": apartment.name,
+            "address": apartment.address,
+            "block_count": apartment.block_count,
+            "floor_count": apartment.floor_count,
+            "unit_count": apartment.unit_count,
+            "default_due_amount": float(
+                apartment.default_due_amount or 0
+            )
+        }
+    }), 200

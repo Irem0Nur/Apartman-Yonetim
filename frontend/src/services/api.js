@@ -482,3 +482,511 @@ export async function getYearlyPaymentReport(
 
   return data;
 }
+
+export async function getTransactions(
+  token,
+  apartmentId,
+  year,
+  month
+) {
+  const params = new URLSearchParams();
+
+  if (year) {
+    params.append("year", year);
+  }
+
+  if (month) {
+    params.append("month", month);
+  }
+
+  const response = await fetch(
+    `${API_URL}/transactions/apartment/${apartmentId}?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Gelir/Gider kayıtları alınamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function createTransaction(
+  token,
+  transaction
+) {
+  const response = await fetch(
+    `${API_URL}/transactions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(transaction),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kayıt oluşturulamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function deleteTransaction(
+  token,
+  transactionId
+) {
+  const response = await fetch(
+    `${API_URL}/transactions/${transactionId}`,
+    {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Kayıt silinemedi"
+    );
+  }
+
+  return data;
+}
+export async function getFinancialSummary(
+  token,
+  apartmentId,
+  year,
+  month
+) {
+  const params = new URLSearchParams();
+
+  params.append("year", year);
+  params.append("month", month);
+
+  const response = await fetch(
+    `${API_URL}/transactions/summary/${apartmentId}?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Finansal özet alınamadı"
+    );
+  }
+
+  return data;
+}
+export async function getCash(
+  token,
+  apartmentId,
+  year,
+  month
+) {
+  const params = new URLSearchParams();
+
+  params.append("year", year);
+  params.append("month", month);
+
+  const response = await fetch(
+    `${API_URL}/cash/apartment/${apartmentId}?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Kasa bilgileri alınamadı"
+    );
+  }
+
+  return data;
+}
+export async function getDecisions(
+  token,
+  apartmentId,
+  year,
+  search = ""
+) {
+  const params =
+    new URLSearchParams();
+
+  if (year) {
+    params.append(
+      "year",
+      year
+    );
+  }
+
+  if (search) {
+    params.append(
+      "search",
+      search
+    );
+  }
+
+  const response =
+    await fetch(
+      `${API_URL}/decisions/apartment/${apartmentId}?${params.toString()}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Kararlar alınamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function createDecision(
+  token,
+  decision
+) {
+  const response =
+    await fetch(
+      `${API_URL}/decisions`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${token}`,
+        },
+
+        body:
+          JSON.stringify(
+            decision
+          ),
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Karar oluşturulamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function updateDecision(
+  token,
+  decisionId,
+  decision
+) {
+  const response =
+    await fetch(
+      `${API_URL}/decisions/${decisionId}`,
+      {
+        method: "PUT",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${token}`,
+        },
+
+        body:
+          JSON.stringify(
+            decision
+          ),
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Karar güncellenemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function deleteDecision(
+  token,
+  decisionId
+) {
+  const response =
+    await fetch(
+      `${API_URL}/decisions/${decisionId}`,
+      {
+        method: "DELETE",
+
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Karar silinemedi"
+    );
+  }
+
+  return data;
+}
+export async function getMeetings(
+  token,
+  apartmentId,
+  year,
+  search = "",
+  status = ""
+) {
+  const params =
+    new URLSearchParams();
+
+  if (year) {
+    params.append(
+      "year",
+      year
+    );
+  }
+
+  if (search) {
+    params.append(
+      "search",
+      search
+    );
+  }
+
+  if (status) {
+    params.append(
+      "status",
+      status
+    );
+  }
+
+  const response =
+    await fetch(
+      `${API_URL}/meetings/apartment/${apartmentId}?${params.toString()}`,
+      {
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Toplantılar alınamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function createMeeting(
+  token,
+  meeting
+) {
+  const response =
+    await fetch(
+      `${API_URL}/meetings`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${token}`,
+        },
+
+        body:
+          JSON.stringify(
+            meeting
+          ),
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Toplantı oluşturulamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function updateMeeting(
+  token,
+  meetingId,
+  meeting
+) {
+  const response =
+    await fetch(
+      `${API_URL}/meetings/${meetingId}`,
+      {
+        method: "PUT",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+
+          Authorization:
+            `Bearer ${token}`,
+        },
+
+        body:
+          JSON.stringify(
+            meeting
+          ),
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Toplantı güncellenemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function deleteMeeting(
+  token,
+  meetingId
+) {
+  const response =
+    await fetch(
+      `${API_URL}/meetings/${meetingId}`,
+      {
+        method: "DELETE",
+
+        headers: {
+          Authorization:
+            `Bearer ${token}`,
+        },
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Toplantı silinemedi"
+    );
+  }
+
+  return data;
+}
+export async function updateApartment(
+  token,
+  apartmentId,
+  apartmentData
+) {
+  const response = await fetch(
+    `${API_URL}/apartments/${apartmentId}`,
+    {
+      method: "PUT",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        Authorization:
+          `Bearer ${token}`,
+      },
+
+      body:
+        JSON.stringify(
+          apartmentData
+        ),
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Apartman bilgileri güncellenemedi"
+    );
+  }
+
+  return data;
+}

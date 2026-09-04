@@ -6,3 +6,6 @@ from .person import Person
 from .unit_person import UnitPerson
 from .due import Due
 from .payment import Payment
+from .transaction import Transaction
+from .decision import Decision
+from .meeting import Meeting

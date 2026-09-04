@@ -13,7 +13,10 @@ import Units from "./pages/Units";
 import People from "./pages/People";
 import Dues from "./pages/Dues";
 import Payments from "./pages/Payments";
-
+import IncomeExpense from "./pages/IncomeExpense";
+import Cash from "./pages/Cash";
+import Decisions from "./pages/Decisions";
+import Meetings from "./pages/Meetings";
 
 function App() {
   return (
@@ -64,6 +67,26 @@ function App() {
         <Route
           path="/odemeler"
           element={<Payments />}
+        />
+
+        <Route
+          path="/gelir-gider"
+          element={<IncomeExpense />}
+        />
+
+        <Route
+          path="/kasa"
+         element={<Cash />}
+        />
+
+        <Route
+          path="/karar-defteri"
+         element={<Decisions />}
+        />
+
+        <Route
+        path="/toplantilar"
+        element={<Meetings />}
         />
 
       </Routes>

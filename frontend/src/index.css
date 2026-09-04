@@ -1777,3 +1777,1222 @@ input {
   }
 
 }
+
+/* ==============================
+   GELİR / GİDER
+================================ */
+
+.finance-filter-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.finance-filter-row .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.finance-filter-row label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.finance-filter-row select {
+  min-width: 150px;
+  padding: 10px 12px;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  background: white;
+}
+
+.finance-summary {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      3,
+      minmax(180px, 1fr)
+    );
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.finance-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.finance-card span {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.finance-card strong {
+  font-size: 22px;
+}
+
+.income-card strong {
+  color: #166534;
+}
+
+.expense-card strong {
+  color: #b91c1c;
+}
+
+.balance-card strong {
+  color: #1e293b;
+}
+
+.finance-form {
+  display: grid;
+  grid-template-columns:
+    repeat(
+      5,
+      minmax(140px, 1fr)
+    );
+  gap: 16px;
+  align-items: end;
+  margin-top: 18px;
+}
+
+.finance-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.finance-form label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.finance-form input,
+.finance-form select {
+  padding: 10px 12px;
+  border: 1px solid #dbe2ea;
+  border-radius: 8px;
+  background: white;
+}
+
+.form-description {
+  grid-column: span 2;
+}
+
+.transaction-type {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.transaction-type.income {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.transaction-type.expense {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+@media (max-width: 1100px) {
+  .finance-form {
+    grid-template-columns:
+      repeat(
+        2,
+        minmax(160px, 1fr)
+      );
+  }
+
+  .form-description {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 700px) {
+  .finance-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .finance-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+.finance-summary-five {
+  grid-template-columns:
+    repeat(5, minmax(150px, 1fr));
+}
+
+.finance-card small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.finance-note {
+  margin: 6px 0 18px;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.positive-balance {
+  color: #166534 !important;
+}
+
+.negative-balance {
+  color: #b91c1c !important;
+}
+
+@media (max-width: 1200px) {
+  .finance-summary-five {
+    grid-template-columns:
+      repeat(2, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .finance-summary-five {
+    grid-template-columns: 1fr;
+  }
+}
+.cash-balance-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+
+  margin-bottom: 20px;
+  padding: 26px 30px;
+
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
+.cash-balance-card span {
+  display: block;
+  margin-bottom: 5px;
+
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.cash-balance-card p {
+  margin: 0;
+
+  font-size: 13px;
+  color: #64748b;
+}
+
+.cash-balance-card > strong {
+  font-size: 30px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.cash-summary {
+  grid-template-columns:
+    repeat(5, minmax(150px, 1fr));
+}
+
+.cash-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+
+  margin-bottom: 20px;
+}
+
+.cash-table-header h2 {
+  margin-bottom: 5px;
+}
+
+.cash-table-header p {
+  margin: 0;
+
+  color: #64748b;
+  font-size: 13px;
+}
+
+.cash-movement-count {
+  padding: 8px 12px;
+
+  background: #f1f5f9;
+  border-radius: 8px;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .cash-summary {
+    grid-template-columns:
+      repeat(2, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .cash-balance-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .cash-balance-card > strong {
+    font-size: 25px;
+  }
+
+  .cash-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .cash-table-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+.decision-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.decision-form-card {
+  margin-bottom: 20px;
+}
+
+.decision-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.decision-form-header h2 {
+  margin: 0 0 6px;
+}
+
+.decision-form-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.decision-close-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  color: #64748b;
+}
+
+.decision-form {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(180px, 1fr));
+  gap: 18px;
+}
+
+.decision-title-field {
+  grid-column: span 3;
+}
+
+.decision-full-field {
+  grid-column: span 3;
+}
+
+.decision-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 100px;
+}
+
+.decision-form-actions {
+  grid-column: span 3;
+
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 5px;
+}
+
+.decision-filter-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.decision-filter-row h2 {
+  margin: 0 0 5px;
+}
+
+.decision-filter-row p {
+  margin: 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.decision-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.decision-search select,
+.decision-search input {
+  min-height: 40px;
+}
+
+.decision-search input {
+  min-width: 220px;
+}
+
+.decision-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.decision-card {
+  padding: 22px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  background: #ffffff;
+}
+
+.decision-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.decision-number {
+  font-size: 14px;
+  color: #475569;
+}
+
+.decision-number strong {
+  color: #0f172a;
+}
+
+.decision-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.decision-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+
+  margin-top: 14px;
+
+  color: #64748b;
+  font-size: 13px;
+}
+
+.decision-card h3 {
+  margin: 18px 0 10px;
+  font-size: 18px;
+}
+
+.decision-description {
+  color: #334155;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.decision-notes {
+  margin-top: 16px;
+  padding: 12px 14px;
+
+  background: #f8fafc;
+  border-radius: 8px;
+
+  color: #475569;
+  font-size: 13px;
+
+  white-space: pre-wrap;
+}
+
+@media (max-width: 900px) {
+  .decision-form {
+    grid-template-columns: 1fr;
+  }
+
+  .decision-title-field,
+  .decision-full-field,
+  .decision-form-actions {
+    grid-column: span 1;
+  }
+
+  .decision-filter-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .decision-search {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .decision-search input {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media print {
+  .sidebar,
+  .decision-header-actions,
+  .decision-form-card,
+  .decision-filter-row form,
+  .decision-card-actions {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  .content-card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  .decision-card {
+    break-inside: avoid;
+    border: 1px solid #999;
+  }
+}
+.meeting-form-card {
+  margin-bottom: 20px;
+}
+
+.meeting-form-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.meeting-form-header h2 {
+  margin: 0 0 6px;
+}
+
+.meeting-form-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.meeting-close-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 18px;
+  color: #64748b;
+}
+
+.meeting-form {
+  display: grid;
+  grid-template-columns:
+    repeat(3, minmax(180px, 1fr));
+  gap: 18px;
+}
+
+.meeting-title-field {
+  grid-column: span 3;
+}
+
+.meeting-full-field {
+  grid-column: span 3;
+}
+
+.meeting-form textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.meeting-form-actions {
+  grid-column: span 3;
+
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.meeting-filter-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.meeting-filter-row h2 {
+  margin: 0 0 5px;
+}
+
+.meeting-filter-row p {
+  margin: 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.meeting-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meeting-search select,
+.meeting-search input {
+  min-height: 40px;
+}
+
+.meeting-search input {
+  min-width: 220px;
+}
+
+.meeting-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.meeting-card {
+  padding: 22px;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+
+  background: #ffffff;
+}
+
+.meeting-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.meeting-card-top h3 {
+  margin: 12px 0 0;
+}
+
+.meeting-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.meeting-status-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.meeting-status,
+.meeting-type {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 5px 9px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.meeting-status.planned {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.meeting-status.completed {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.meeting-status.cancelled {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.meeting-type {
+  background: #f8fafc;
+  color: #475569;
+}
+
+.meeting-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+
+  margin-top: 16px;
+
+  font-size: 13px;
+  color: #64748b;
+}
+
+.meeting-section {
+  margin-top: 18px;
+}
+
+.meeting-section strong {
+  display: block;
+  margin-bottom: 7px;
+}
+
+.meeting-section p {
+  margin: 0;
+
+  color: #334155;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.meeting-notes {
+  padding: 14px;
+
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+@media (max-width: 900px) {
+  .meeting-form {
+    grid-template-columns: 1fr;
+  }
+
+  .meeting-title-field,
+  .meeting-full-field,
+  .meeting-form-actions {
+    grid-column: span 1;
+  }
+
+  .meeting-filter-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .meeting-search {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .meeting-search input {
+    min-width: 0;
+  }
+
+  .meeting-card-top {
+    flex-direction: column;
+  }
+}
+.dashboard-link-button {
+  border: none;
+  background: transparent;
+  color: #2563eb;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dashboard-link-button:hover {
+  text-decoration: underline;
+}
+
+
+/* SON İŞLEMLER */
+
+.dashboard-movement-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-movement-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+
+  padding: 14px 0;
+
+  border-bottom: 1px solid #eef2f7;
+}
+
+.dashboard-movement-item:last-child {
+  border-bottom: none;
+}
+
+.dashboard-movement-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.dashboard-movement-left > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.dashboard-movement-left strong {
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.dashboard-movement-left span {
+  font-size: 12px;
+  color: #64748b;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-movement-left small {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.dashboard-movement-icon {
+  width: 36px;
+  height: 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 10px;
+
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.dashboard-movement-icon.income {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.dashboard-movement-icon.expense {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+
+/* YAKLAŞAN TOPLANTILAR */
+
+.dashboard-meeting-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-meeting-item {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  padding: 14px 0;
+
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #eef2f7;
+
+  text-align: left;
+  cursor: pointer;
+}
+
+.dashboard-meeting-item:last-child {
+  border-bottom: none;
+}
+
+.dashboard-meeting-item:hover {
+  background: #f8fafc;
+}
+
+.dashboard-meeting-date {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  background: #eff6ff;
+  border-radius: 10px;
+}
+
+.dashboard-meeting-item > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-meeting-item strong {
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.dashboard-meeting-item span {
+  color: #475569;
+  font-size: 12px;
+}
+
+.dashboard-meeting-item small {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.apartment-edit-form {
+  width: 100%;
+}
+
+.apartment-edit-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+
+.apartment-edit-grid .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.apartment-edit-grid label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.apartment-edit-grid input {
+  width: 100%;
+  min-height: 46px;
+
+  padding: 10px 13px;
+
+  border: 1px solid #dbe2ea;
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  font-size: 15px;
+  color: #0f172a;
+
+  outline: none;
+}
+
+.apartment-edit-grid input:focus {
+  border-color: #2563eb;
+  background: #ffffff;
+}
+
+.apartment-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 24px;
+}
+
+@media (max-width: 800px) {
+  .apartment-edit-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================================================
+   GENEL VERİ TABLOLARI
+========================================================= */
+
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.data-table thead {
+  background: #f8fafc;
+}
+
+.data-table th {
+  padding: 14px 16px;
+
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #475569;
+
+  border-bottom: 1px solid #e2e8f0;
+
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 14px 16px;
+
+  font-size: 14px;
+  color: #0f172a;
+
+  border-bottom: 1px solid #eef2f7;
+
+  vertical-align: middle;
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.data-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+
+/* =========================================================
+   TUTAR ALANLARI
+========================================================= */
+
+.data-table td strong {
+  font-weight: 700;
+}
+
+.money-positive {
+  color: #15803d;
+}
+
+.money-negative {
+  color: #b91c1c;
+}
+
+
+/* =========================================================
+   GELİR / GİDER ETİKETLERİ
+========================================================= */
+
+.transaction-type {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+.transaction-type.income {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.transaction-type.expense {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+
+/* =========================================================
+   TABLO İŞLEM BUTONLARI
+========================================================= */
+
+.table-action-button {
+  min-width: 60px;
+
+  padding: 7px 12px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.table-action-button:hover {
+  background: #f1f5f9;
+}
+
+.table-delete-button {
+  min-width: 60px;
+
+  padding: 7px 12px;
+
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+
+  background: #fff1f2;
+
+  color: #b91c1c;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.table-delete-button:hover {
+  background: #fee2e2;
+}
+
+
+/* =========================================================
+   ÖDEMELER TABLOSU
+========================================================= */
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1050px;
+}
+
+.payments-table thead {
+  background: #f8fafc;
+}
+
+.payments-table th {
+  padding: 14px 16px;
+
+  text-align: left;
+
+  color: #475569;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  border-bottom: 1px solid #e2e8f0;
+
+  white-space: nowrap;
+}
+
+.payments-table td {
+  padding: 14px 16px;
+
+  border-bottom: 1px solid #eef2f7;
+
+  font-size: 14px;
+  color: #0f172a;
+
+  vertical-align: middle;
+}
+
+.payments-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.payments-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+
+/* =========================================================
+   GELİR / GİDER TABLOSU
+========================================================= */
+
+.income-expense-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 800px;
+}
+
+.income-expense-table thead {
+  background: #f8fafc;
+}
+
+.income-expense-table th {
+  padding: 14px 16px;
+
+  text-align: left;
+
+  color: #475569;
+  font-size: 13px;
+  font-weight: 700;
+
+  border-bottom: 1px solid #e2e8f0;
+
+  white-space: nowrap;
+}
+
+.income-expense-table td {
+  padding: 14px 16px;
+
+  border-bottom: 1px solid #eef2f7;
+
+  color: #0f172a;
+  font-size: 14px;
+}
+
+.income-expense-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+
+/* =========================================================
+   MOBİL
+========================================================= */
+
+@media (max-width: 900px) {
+  .table-wrapper {
+    overflow-x: auto;
+  }
+
+  .data-table,
+  .payments-table,
+  .income-expense-table {
+    min-width: 850px;
+  }
+}

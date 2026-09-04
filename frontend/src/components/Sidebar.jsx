@@ -65,29 +65,28 @@ function Sidebar({ active }) {
         >
           💳 Aidatlar
         </button>
+
         <button
-          className={`menu-item ${
-           active === "payments" ? "active" : ""
-         }`}
-        onClick={() => navigate("/odemeler")}
->
+          className={menuClass("payments")}
+          onClick={() => navigate("/odemeler")}
+        >
           🕒 Ödemeler
         </button>
-          
-        
 
         <button
           className={menuClass("income-expense")}
-          disabled
-          title="Yakında eklenecek"
+          onClick={() =>
+            navigate("/gelir-gider")
+          }
         >
           📉 Gelir / Gider
         </button>
 
         <button
           className={menuClass("cash")}
-          disabled
-          title="Yakında eklenecek"
+          onClick={() =>
+            navigate("/kasa")
+          }
         >
           🏦 Kasa
         </button>
@@ -96,29 +95,23 @@ function Sidebar({ active }) {
           YÖNETİM
         </div>
 
-        <button
-          className={menuClass("decisions")}
-          disabled
-          title="Yakında eklenecek"
-        >
-          📒 Karar Defteri
-        </button>
+      <button
+        className={menuClass("decisions")}
+        onClick={() =>
+        navigate("/karar-defteri")
+       }
+      >
+      📒 Karar Defteri
+      </button>
 
-        <button
-          className={menuClass("meetings")}
-          disabled
-          title="Yakında eklenecek"
-        >
-          📅 Toplantılar
-        </button>
-
-        <button
-          className={menuClass("tasks")}
-          disabled
-          title="Yakında eklenecek"
-        >
-          ✅ Yapılacaklar
-        </button>
+      <button
+         className={menuClass("meetings")}
+         onClick={() =>
+      navigate("/toplantilar")
+     }
+>
+      📅 Toplantılar
+      </button>
 
       </nav>
     </aside>
