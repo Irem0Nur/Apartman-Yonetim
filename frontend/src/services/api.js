@@ -22,17 +22,31 @@ export async function login(email, password) {
 }
 
 export async function getCurrentUser(token) {
+  if (
+    !token ||
+    token === "null" ||
+    token === "undefined" ||
+    token.trim() === ""
+  ) {
+    throw new Error("Geçerli oturum bulunamadı");
+  }
+
   const response = await fetch(`${API_URL}/auth/me`, {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
+  const data = await response.json();
+
   if (!response.ok) {
-    throw new Error("Oturum doğrulanamadı");
+    throw new Error(
+      data.message || "Oturum doğrulanamadı"
+    );
   }
 
-  return response.json();
+  return data;
 }
 
 export async function register(name, email, password) {
@@ -52,6 +66,55 @@ export async function register(name, email, password) {
 
   if (!response.ok) {
     throw new Error(data.message || "Kayıt oluşturulamadı");
+  }
+
+  return data;
+}
+
+export async function verifyEmail(email, code) {
+  const response = await fetch(`${API_URL}/auth/verify-email`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      email,
+      code,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "E-posta doğrulanamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function resendVerification(email) {
+  const response = await fetch(
+    `${API_URL}/auth/resend-verification`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message || "Doğrulama kodu gönderilemedi"
+    );
   }
 
   return data;

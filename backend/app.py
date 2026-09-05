@@ -1,10 +1,16 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
 
 from config import Config
-from extensions import db, migrate
-from models import User, Apartment, Unit, Resident
+from extensions import db, migrate, jwt, mail
+
+from models import (
+    User,
+    Apartment,
+    Unit,
+    Resident,
+)
+
 from routes.auth import auth_bp
 from routes.apartments import apartments_bp
 from routes.units import units_bp
@@ -16,16 +22,53 @@ from routes.cash import cash_bp
 from routes.decisions import decisions_bp
 from routes.meetings import meetings_bp
 
+
 app = Flask(__name__)
 
 app.config.from_object(Config)
 
-CORS(app)
+
+# ---------------------------------------------------------
+# CORS
+# ---------------------------------------------------------
+
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": [
+                "http://localhost:5173",
+                "http://127.0.0.1:5173",
+            ]
+        }
+    },
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+    ],
+    methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS",
+    ],
+)
+
+
+# ---------------------------------------------------------
+# EXTENSIONS
+# ---------------------------------------------------------
 
 db.init_app(app)
 migrate.init_app(app, db)
+jwt.init_app(app)
+mail.init_app(app)
 
-jwt = JWTManager(app)
+
+# ---------------------------------------------------------
+# BLUEPRINTS
+# ---------------------------------------------------------
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(apartments_bp)
@@ -38,6 +81,10 @@ app.register_blueprint(cash_bp)
 app.register_blueprint(decisions_bp)
 app.register_blueprint(meetings_bp)
 
+
+# ---------------------------------------------------------
+# TEST ROUTES
+# ---------------------------------------------------------
 
 @app.route("/")
 def home():
@@ -53,6 +100,10 @@ def health():
         "database": "connected"
     })
 
+
+# ---------------------------------------------------------
+# RUN
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
     app.run(

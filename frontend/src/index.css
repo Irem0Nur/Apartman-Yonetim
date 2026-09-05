@@ -2996,3 +2996,266 @@ input {
     min-width: 850px;
   }
 }
+.password-help {
+  margin-top: -8px;
+  margin-bottom: 14px;
+
+  color: #64748b;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.show-password-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 4px 0 18px;
+
+  color: #475569;
+
+  font-size: 13px;
+
+  cursor: pointer;
+}
+
+.show-password-row input {
+  width: 16px;
+  height: 16px;
+
+  cursor: pointer;
+}
+.logout-button {
+  width: calc(100% - 24px);
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 20px 12px 12px;
+  padding: 12px 14px;
+
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+
+  background: #fff1f2;
+  color: #b91c1c;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.logout-button:hover {
+  background: #ffe4e6;
+  border-color: #fca5a5;
+}
+/* =========================================================
+   E-POSTA DOĞRULAMA
+   ========================================================= */
+
+.verify-card {
+  max-width: 540px;
+}
+
+.verify-icon {
+  width: 76px;
+  height: 76px;
+  margin: 10px auto 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 22px;
+
+  background: linear-gradient(
+    135deg,
+    #4f46e5,
+    #6366f1
+  );
+
+  color: white;
+
+  font-size: 34px;
+
+  box-shadow:
+    0 12px 30px
+    rgba(79, 70, 229, 0.22);
+}
+
+.verify-card h1 {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.verify-subtitle {
+  text-align: center;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.verify-email-box {
+  margin-bottom: 26px;
+  padding: 16px 18px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  text-align: center;
+
+  border-radius: 14px;
+
+  background: #f5f7ff;
+  border: 1px solid #e1e5ff;
+}
+
+.verify-email-label {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.verify-email-box strong {
+  color: #1e293b;
+  font-size: 16px;
+  word-break: break-word;
+}
+
+.verification-code-input {
+  height: 68px;
+
+  text-align: center;
+
+  font-size: 30px;
+  font-weight: 700;
+
+  letter-spacing: 12px;
+
+  padding-left: 22px;
+
+  border: 2px solid #d9def0;
+  border-radius: 14px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.verification-code-input:focus {
+  outline: none;
+
+  border-color: #4f46e5;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(79, 70, 229, 0.12);
+}
+
+.verification-code-input::placeholder {
+  color: #c4c9d8;
+}
+
+.verification-info {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  margin-top: -2px;
+  margin-bottom: 18px;
+
+  padding: 11px 13px;
+
+  border-radius: 10px;
+
+  background: #f8fafc;
+
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+.verification-info p {
+  margin: 0;
+}
+
+.success-message {
+  margin-bottom: 16px;
+  padding: 13px 15px;
+
+  border-radius: 10px;
+
+  background: #ecfdf5;
+
+  color: #047857;
+
+  font-size: 14px;
+
+  border: 1px solid #a7f3d0;
+}
+
+.verify-resend {
+  margin-top: 22px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+
+  color: #64748b;
+
+  font-size: 14px;
+}
+
+.resend-button {
+  border: none;
+  background: transparent;
+
+  color: #4f46e5;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  padding: 4px;
+}
+
+.resend-button:hover {
+  text-decoration: underline;
+}
+
+.resend-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.verify-card .register-link {
+  margin-top: 24px;
+  text-align: center;
+}
+
+
+/* Mobil */
+
+@media (max-width: 600px) {
+
+  .verify-card {
+    width: calc(100% - 28px);
+  }
+
+  .verification-code-input {
+    font-size: 26px;
+    letter-spacing: 8px;
+  }
+
+}

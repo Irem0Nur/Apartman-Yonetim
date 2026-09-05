@@ -3,6 +3,14 @@ import { useNavigate } from "react-router-dom";
 function Sidebar({ active }) {
   const navigate = useNavigate();
 
+  function handleLogout() {
+    localStorage.removeItem("access_token");
+
+    navigate("/", {
+      replace: true,
+    });
+  }
+
   function menuClass(name) {
     return active === name
       ? "menu-item active"
@@ -112,6 +120,15 @@ function Sidebar({ active }) {
 >
       📅 Toplantılar
       </button>
+
+      <button
+  type="button"
+  className="logout-button"
+  onClick={handleLogout}
+>
+  <span>🚪</span>
+  <span>Oturumdan Çık</span>
+</button>
 
       </nav>
     </aside>
