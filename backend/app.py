@@ -2,7 +2,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 
 from config import Config
-from extensions import db, migrate, jwt, mail
+from extensions import db, migrate, jwt
 
 from models import (
     User,
@@ -43,19 +43,33 @@ CORS(
             ]
         }
     },
-    allow_headers=["Content-Type", "Authorization"],
-    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization"
+    ],
+    methods=[
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE",
+        "OPTIONS"
+    ]
 )
 
 
 # ---------------------------------------------------------
-# EXTENSIONS
+# DATABASE
 # ---------------------------------------------------------
 
 db.init_app(app)
 migrate.init_app(app, db)
+
+
+# ---------------------------------------------------------
+# JWT
+# ---------------------------------------------------------
+
 jwt.init_app(app)
-mail.init_app(app)
 
 
 # ---------------------------------------------------------
@@ -75,7 +89,7 @@ app.register_blueprint(meetings_bp)
 
 
 # ---------------------------------------------------------
-# TEST ROUTES
+# HOME
 # ---------------------------------------------------------
 
 @app.route("/")
@@ -84,6 +98,10 @@ def home():
         "message": "Apartman Yönetim API çalışıyor"
     })
 
+
+# ---------------------------------------------------------
+# HEALTH CHECK
+# ---------------------------------------------------------
 
 @app.route("/api/health")
 def health():
@@ -94,7 +112,7 @@ def health():
 
 
 # ---------------------------------------------------------
-# RUN
+# LOCAL DEVELOPMENT
 # ---------------------------------------------------------
 
 if __name__ == "__main__":

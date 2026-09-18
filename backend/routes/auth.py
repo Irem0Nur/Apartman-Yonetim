@@ -1,22 +1,18 @@
-from datetime import datetime, timedelta
-import secrets
+import os
+import logging
+import random
+from datetime import datetime, timedelta, timezone
+
+import resend
 
 from flask import Blueprint, request, jsonify
-
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
     get_jwt_identity,
 )
 
-from flask_mail import Message
-
-from werkzeug.security import (
-    generate_password_hash,
-    check_password_hash,
-)
-
-from extensions import db, mail
+from extensions import db
 from models import User
 
 
@@ -28,201 +24,307 @@ auth_bp = Blueprint(
 
 
 # ---------------------------------------------------------
+# LOGGING
+# ---------------------------------------------------------
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------
+# RESEND CONFIGURATION
+# ---------------------------------------------------------
+
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+
+RESEND_FROM_EMAIL = os.getenv(
+    "RESEND_FROM_EMAIL",
+    "onboarding@resend.dev"
+)
+
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
+
+
+# ---------------------------------------------------------
 # VERIFICATION CODE
 # ---------------------------------------------------------
 
 def generate_verification_code():
-    return f"{secrets.randbelow(1000000):06d}"
+    """
+    6 haneli doğrulama kodu oluşturur.
+    """
+    return str(
+        random.randint(100000, 999999)
+    )
 
 
 # ---------------------------------------------------------
 # SEND VERIFICATION EMAIL
 # ---------------------------------------------------------
 
-def send_verification_email(user, code):
-    msg = Message(
-        subject="ApartmanYönet E-posta Doğrulama Kodu",
-        recipients=[user.email],
+def send_verification_email(
+    email,
+    verification_code
+):
+    """
+    Resend API üzerinden doğrulama e-postası gönderir.
+    """
+
+    if not RESEND_API_KEY:
+        raise RuntimeError(
+            "RESEND_API_KEY environment variable tanımlı değil."
+        )
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <title>E-posta Doğrulama</title>
+    </head>
+
+    <body
+        style="
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 30px;
+        "
+    >
+
+        <div
+            style="
+                max-width: 500px;
+                margin: auto;
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+            "
+        >
+
+            <h2 style="text-align: center;">
+                Apartman Yönetim
+            </h2>
+
+            <p>
+                Merhaba,
+            </p>
+
+            <p>
+                Hesabınızı doğrulamak için aşağıdaki
+                doğrulama kodunu kullanabilirsiniz:
+            </p>
+
+            <div
+                style="
+                    text-align: center;
+                    margin: 30px 0;
+                "
+            >
+                <span
+                    style="
+                        display: inline-block;
+                        background-color: #eeeeee;
+                        padding: 15px 30px;
+                        font-size: 30px;
+                        font-weight: bold;
+                        letter-spacing: 8px;
+                        border-radius: 8px;
+                    "
+                >
+                    {verification_code}
+                </span>
+            </div>
+
+            <p>
+                Bu kodun geçerlilik süresi:
+                <strong>10 dakika</strong>.
+            </p>
+
+            <p>
+                Eğer bu işlemi siz gerçekleştirmediyseniz
+                bu e-postayı dikkate almayabilirsiniz.
+            </p>
+
+            <hr>
+
+            <p
+                style="
+                    font-size: 12px;
+                    color: #777;
+                "
+            >
+                Apartman Yönetim Sistemi
+            </p>
+
+        </div>
+
+    </body>
+    </html>
+    """
+
+    params = {
+        "from": RESEND_FROM_EMAIL,
+        "to": [email],
+        "subject": "Apartman Yönetim - E-posta Doğrulama Kodunuz",
+        "html": html_content,
+    }
+
+    response = resend.Emails.send(params)
+
+    logger.info(
+        "Verification email sent successfully to %s",
+        email
     )
 
-    msg.body = f"""
-Merhaba {user.name},
-
-ApartmanYönet hesabınızı doğrulamak için aşağıdaki kodu kullanın:
-
-{code}
-
-Bu kod 10 dakika boyunca geçerlidir.
-
-Eğer bu kaydı siz oluşturmadıysanız bu e-postayı dikkate almayabilirsiniz.
-"""
-
-    mail.send(msg)
+    return response
 
 
 # ---------------------------------------------------------
 # REGISTER
 # ---------------------------------------------------------
 
-@auth_bp.route("/register", methods=["POST"])
+@auth_bp.route(
+    "/register",
+    methods=["POST"]
+)
 def register():
+
     try:
-        data = request.get_json() or {}
 
-        name = data.get("name", "").strip()
-        email = data.get("email", "").strip().lower()
-        password = data.get("password", "")
+        data = request.get_json()
 
-        # -----------------------------------------------------
+        if not data:
+            return jsonify({
+                "message": "Geçersiz istek."
+            }), 400
+
+        name = data.get("name")
+        email = data.get("email")
+        password = data.get("password")
+
+        # -------------------------------------------------
         # VALIDATION
-        # -----------------------------------------------------
+        # -------------------------------------------------
 
-        if not name:
+        if not name or not email or not password:
             return jsonify({
-                "message": "Ad soyad zorunludur."
+                "message": "Ad, e-posta ve şifre zorunludur."
             }), 400
 
-        if not email:
+        email = email.strip().lower()
+
+        if len(password) < 6:
             return jsonify({
-                "message": "E-posta adresi zorunludur."
+                "message": "Şifre en az 6 karakter olmalıdır."
             }), 400
 
-        if not password:
-            return jsonify({
-                "message": "Şifre zorunludur."
-            }), 400
-
-        if len(password) < 8:
-            return jsonify({
-                "message": "Şifre en az 8 karakter olmalıdır."
-            }), 400
-
-        if not any(char.isalpha() for char in password):
-            return jsonify({
-                "message": "Şifre en az 1 harf içermelidir."
-            }), 400
-
-        if not any(char.isdigit() for char in password):
-            return jsonify({
-                "message": "Şifre en az 1 rakam içermelidir."
-            }), 400
-
-        # -----------------------------------------------------
+        # -------------------------------------------------
         # EXISTING USER
-        # -----------------------------------------------------
+        # -------------------------------------------------
 
         user = User.query.filter_by(
             email=email
         ).first()
 
-        verification_code = generate_verification_code()
-
-        expires_at = (
-            datetime.utcnow()
-            + timedelta(minutes=10)
-        )
-
         if user:
 
-            if user.is_email_verified:
+            if getattr(
+                user,
+                "is_verified",
+                False
+            ):
                 return jsonify({
-                    "message": "Bu e-posta adresiyle kayıtlı bir hesap zaten var."
+                    "message": "Bu e-posta adresi zaten kayıtlı."
                 }), 409
 
-            user.name = name
+            # Kullanıcı kayıtlı fakat doğrulanmamışsa
+            # yeni kod oluştur.
+            verification_code = generate_verification_code()
 
-            user.password_hash = (
-                generate_password_hash(password)
+            user.verification_code = verification_code
+
+            user.verification_code_expires = (
+                datetime.now(timezone.utc)
+                + timedelta(minutes=10)
             )
 
-            user.email_verification_code = (
-                verification_code
-            )
+            # Şifre tekrar gönderildiyse güncelle.
+            user.set_password(password)
 
-            user.email_verification_expires_at = (
-                expires_at
-            )
-
-        # -----------------------------------------------------
-        # NEW USER
-        # -----------------------------------------------------
+            db.session.commit()
 
         else:
+
+            verification_code = generate_verification_code()
 
             user = User(
                 name=name,
                 email=email,
-                password_hash=generate_password_hash(password),
-                is_email_verified=False,
-                email_verification_code=verification_code,
-                email_verification_expires_at=expires_at,
+                verification_code=verification_code,
+                verification_code_expires=(
+                    datetime.now(timezone.utc)
+                    + timedelta(minutes=10)
+                ),
             )
 
+            user.set_password(password)
+
+            # Yeni kullanıcı oluştur.
             db.session.add(user)
 
-        # -----------------------------------------------------
-        # DATABASE SAVE
-        # -----------------------------------------------------
+            db.session.commit()
 
-        db.session.commit()
-
-        # -----------------------------------------------------
+        # -------------------------------------------------
         # SEND EMAIL
-        # -----------------------------------------------------
+        # -------------------------------------------------
 
         try:
 
             send_verification_email(
-                user,
+                email,
                 verification_code
             )
 
         except Exception as mail_error:
 
-            print(
-                "MAIL SEND ERROR:",
-                repr(mail_error)
+            logger.exception(
+                "Verification email could not be sent."
             )
-
-            # Kullanıcı veritabanına kaydedilmiş durumda.
-            # Doğrulama kodu tekrar gönderilebilir.
 
             return jsonify({
                 "message": (
-                    "Hesap oluşturuldu ancak "
-                    "doğrulama e-postası gönderilemedi. "
-                    "Lütfen daha sonra tekrar deneyin."
+                    "Hesabınız oluşturuldu ancak "
+                    "doğrulama e-postası gönderilemedi."
                 ),
-                "email": user.email,
-                "requires_verification": True,
+                "error": str(mail_error),
+                "email": email,
+                "requires_verification": True
             }), 503
 
-        # -----------------------------------------------------
+        # -------------------------------------------------
         # SUCCESS
-        # -----------------------------------------------------
+        # -------------------------------------------------
 
         return jsonify({
             "message": (
-                "Doğrulama kodu e-posta adresinize gönderildi."
+                "Kayıt başarılı. "
+                "E-posta adresinize doğrulama kodu gönderildi."
             ),
-            "email": user.email,
-            "requires_verification": True,
+            "email": email,
+            "requires_verification": True
         }), 201
 
-    except Exception as error:
+    except Exception as e:
 
         db.session.rollback()
 
-        print(
-            "REGISTER ERROR:",
-            repr(error)
+        logger.exception(
+            "Register error."
         )
 
         return jsonify({
-            "message": (
-                "Kayıt sırasında beklenmeyen "
-                "bir hata oluştu."
-            )
+            "message": "Kayıt sırasında bir hata oluştu.",
+            "error": str(e)
         }), 500
 
 
@@ -238,24 +340,23 @@ def verify_email():
 
     try:
 
-        data = request.get_json() or {}
+        data = request.get_json()
 
-        email = data.get(
-            "email",
-            ""
-        ).strip().lower()
+        if not data:
+            return jsonify({
+                "message": "Geçersiz istek."
+            }), 400
 
-        code = data.get(
-            "code",
-            ""
-        ).strip()
+        email = data.get("email")
+        code = data.get("code")
 
         if not email or not code:
             return jsonify({
-                "message": (
-                    "E-posta ve doğrulama kodu zorunludur."
-                )
+                "message": "E-posta ve doğrulama kodu zorunludur."
             }), 400
+
+        email = email.strip().lower()
+        code = str(code).strip()
 
         user = User.query.filter_by(
             email=email
@@ -266,82 +367,99 @@ def verify_email():
                 "message": "Kullanıcı bulunamadı."
             }), 404
 
-        if user.is_email_verified:
-            return jsonify({
-                "message": (
-                    "E-posta adresi zaten doğrulanmış."
-                )
-            }), 400
+        # -------------------------------------------------
+        # ALREADY VERIFIED
+        # -------------------------------------------------
 
-        if not user.email_verification_code:
-            return jsonify({
-                "message": (
-                    "Geçerli bir doğrulama kodu bulunamadı."
-                )
-            }), 400
-
-        if (
-            user.email_verification_expires_at is None
-            or datetime.utcnow()
-            > user.email_verification_expires_at
+        if getattr(
+            user,
+            "is_verified",
+            False
         ):
+            return jsonify({
+                "message": "E-posta adresi zaten doğrulanmış."
+            }), 200
+
+        # -------------------------------------------------
+        # CODE CHECK
+        # -------------------------------------------------
+
+        if user.verification_code != code:
+            return jsonify({
+                "message": "Doğrulama kodu hatalı."
+            }), 400
+
+        # -------------------------------------------------
+        # EXPIRATION CHECK
+        # -------------------------------------------------
+
+        if not user.verification_code_expires:
+
+            return jsonify({
+                "message": "Doğrulama kodu geçersiz."
+            }), 400
+
+        expires_at = user.verification_code_expires
+
+        # SQLite/PostgreSQL timezone farklarını
+        # güvenli şekilde ele al.
+        if expires_at.tzinfo is None:
+
+            expires_at = expires_at.replace(
+                tzinfo=timezone.utc
+            )
+
+        if datetime.now(timezone.utc) > expires_at:
+
             return jsonify({
                 "message": (
                     "Doğrulama kodunun süresi dolmuş."
                 )
             }), 400
 
-        if user.email_verification_code != code:
-            return jsonify({
-                "message": "Doğrulama kodu hatalı."
-            }), 400
-
-        # -----------------------------------------------------
+        # -------------------------------------------------
         # VERIFY
-        # -----------------------------------------------------
+        # -------------------------------------------------
 
-        user.is_email_verified = True
+        user.is_verified = True
 
-        user.email_verification_code = None
-
-        user.email_verification_expires_at = None
+        user.verification_code = None
+        user.verification_code_expires = None
 
         db.session.commit()
 
-        # -----------------------------------------------------
+        # -------------------------------------------------
         # JWT
-        # -----------------------------------------------------
+        # -------------------------------------------------
 
         access_token = create_access_token(
             identity=str(user.id)
         )
 
         return jsonify({
-            "message": (
-                "E-posta başarıyla doğrulandı."
-            ),
+            "message": "E-posta adresi başarıyla doğrulandı.",
             "access_token": access_token,
             "user": {
                 "id": user.id,
                 "name": user.name,
-                "email": user.email,
-            },
+                "email": user.email
+            }
         }), 200
 
-    except Exception as error:
+    except Exception as e:
 
         db.session.rollback()
 
-        print(
-            "VERIFY EMAIL ERROR:",
-            repr(error)
+        logger.exception(
+            "Email verification error."
         )
 
         return jsonify({
             "message": (
                 "E-posta doğrulama sırasında "
                 "bir hata oluştu."
-            )
+            ),
+            "error": str(e)
         }), 500
 
 
@@ -357,19 +475,21 @@ def resend_verification():
 
     try:
 
-        data = request.get_json() or {}
+        data = request.get_json()
 
-        email = data.get(
-            "email",
-            ""
-        ).strip().lower()
+        if not data:
+            return jsonify({
+                "message": "Geçersiz istek."
+            }), 400
+
+        email = data.get("email")
 
         if not email:
             return jsonify({
-                "message": (
-                    "E-posta adresi zorunludur."
-                )
+                "message": "E-posta adresi zorunludur."
             }), 400
+
+        email = email.strip().lower()
 
         user = User.query.filter_by(
             email=email
@@ -380,76 +500,82 @@ def resend_verification():
                 "message": "Kullanıcı bulunamadı."
             }), 404
 
-        if user.is_email_verified:
+        # -------------------------------------------------
+        # ALREADY VERIFIED
+        # -------------------------------------------------
+
+        if getattr(
+            user,
+            "is_verified",
+            False
+        ):
             return jsonify({
                 "message": (
-                    "E-posta adresi zaten doğrulanmış."
+                    "Bu e-posta adresi zaten doğrulanmış."
                 )
             }), 400
 
-        # -----------------------------------------------------
+        # -------------------------------------------------
         # NEW CODE
-        # -----------------------------------------------------
+        # -------------------------------------------------
 
-        verification_code = (
-            generate_verification_code()
-        )
+        verification_code = generate_verification_code()
 
-        user.email_verification_code = (
-            verification_code
-        )
+        user.verification_code = verification_code
 
-        user.email_verification_expires_at = (
-            datetime.utcnow()
+        user.verification_code_expires = (
+            datetime.now(timezone.utc)
             + timedelta(minutes=10)
         )
 
         db.session.commit()
 
-        # -----------------------------------------------------
+        # -------------------------------------------------
         # SEND EMAIL
-        # -----------------------------------------------------
+        # -------------------------------------------------
 
         try:
 
             send_verification_email(
-                user,
+                email,
                 verification_code
             )
 
         except Exception as mail_error:
 
-            print(
-                "RESEND MAIL SEND ERROR:",
-                repr(mail_error)
+            logger.exception(
+                "Resend verification email failed."
             )
 
             return jsonify({
                 "message": (
-                    "Doğrulama e-postası gönderilemedi. "
-                    "Lütfen daha sonra tekrar deneyin."
-                )
+                    "Yeni doğrulama kodu oluşturuldu "
+                    "ancak e-posta gönderilemedi."
+                ),
+                "error": str(mail_error)
             }), 503
 
         return jsonify({
             "message": (
-                "Yeni doğrulama kodu gönderildi."
+                "Yeni doğrulama kodu "
+                "e-posta adresinize gönderildi."
             )
         }), 200
 
-    except Exception as error:
+    except Exception as e:
 
         db.session.rollback()
 
-        print(
-            "RESEND VERIFICATION ERROR:",
-            repr(error)
+        logger.exception(
+            "Resend verification error."
         )
 
         return jsonify({
             "message": (
-                "Doğrulama e-postası gönderilemedi."
-            )
+                "Doğrulama kodu gönderilirken "
+                "bir hata oluştu."
+            ),
+            "error": str(e)
         }), 500
 
 
@@ -465,17 +591,15 @@ def login():
 
     try:
 
-        data = request.get_json() or {}
+        data = request.get_json()
 
-        email = data.get(
-            "email",
-            ""
-        ).strip().lower()
+        if not data:
+            return jsonify({
+                "message": "Geçersiz istek."
+            }), 400
 
-        password = data.get(
-            "password",
-            ""
-        )
+        email = data.get("email")
+        password = data.get("password")
 
         if not email or not password:
             return jsonify({
@@ -484,53 +608,73 @@ def login():
                 )
             }), 400
 
+        email = email.strip().lower()
+
         user = User.query.filter_by(
             email=email
         ).first()
 
-        if not user or not check_password_hash(
-            user.password_hash,
-            password
-        ):
+        if not user:
+
             return jsonify({
                 "message": (
                     "E-posta veya şifre hatalı."
                 )
             }), 401
 
-        if not user.is_email_verified:
+        if not user.check_password(password):
+
+            return jsonify({
+                "message": (
+                    "E-posta veya şifre hatalı."
+                )
+            }), 401
+
+        # -------------------------------------------------
+        # EMAIL VERIFICATION
+        # -------------------------------------------------
+
+        if not getattr(
+            user,
+            "is_verified",
+            False
+        ):
+
             return jsonify({
                 "message": (
                     "Lütfen önce e-posta adresinizi doğrulayın."
                 ),
                 "requires_verification": True,
-                "email": user.email,
+                "email": user.email
             }), 403
+
+        # -------------------------------------------------
+        # JWT
+        # -------------------------------------------------
 
         access_token = create_access_token(
             identity=str(user.id)
         )
 
         return jsonify({
+            "message": "Giriş başarılı.",
             "access_token": access_token,
             "user": {
                 "id": user.id,
                 "name": user.name,
-                "email": user.email,
-            },
+                "email": user.email
+            }
         }), 200
 
-    except Exception as error:
+    except Exception as e:
 
-        print(
-            "LOGIN ERROR:",
-            repr(error)
+        logger.exception(
+            "Login error."
         )
 
         return jsonify({
-            "message": (
-                "Giriş sırasında bir hata oluştu."
-            )
+            "message": "Giriş sırasında bir hata oluştu.",
+            "error": str(e)
         }), 500
 
 
@@ -549,8 +693,7 @@ def me():
 
         user_id = get_jwt_identity()
 
-        user = db.session.get(
-            User,
+        user = User.query.get(
             int(user_id)
         )
 
@@ -559,28 +702,26 @@ def me():
                 "message": "Kullanıcı bulunamadı."
             }), 404
 
-        if not user.is_email_verified:
-            return jsonify({
-                "message": (
-                    "E-posta adresi doğrulanmamış."
-                )
-            }), 403
-
         return jsonify({
             "id": user.id,
             "name": user.name,
             "email": user.email,
+            "is_verified": getattr(
+                user,
+                "is_verified",
+                False
+            )
         }), 200
 
-    except Exception as error:
+    except Exception as e:
 
-        print(
-            "ME ERROR:",
-            repr(error)
+        logger.exception(
+            "Current user error."
         )
 
         return jsonify({
             "message": (
                 "Kullanıcı bilgileri alınamadı."
-            )
+            ),
+            "error": str(e)
         }), 500

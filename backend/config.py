@@ -8,7 +8,6 @@ class Config:
     # ---------------------------------------------------------
     # DATABASE
     # ---------------------------------------------------------
-
     SQLALCHEMY_DATABASE_URI = os.getenv(
         "DATABASE_URL",
         "sqlite:///apartman.db"
@@ -19,52 +18,24 @@ class Config:
     # ---------------------------------------------------------
     # JWT
     # ---------------------------------------------------------
-
     JWT_SECRET_KEY = os.getenv(
         "JWT_SECRET_KEY",
         "dev-secret-key-change-this"
     )
 
     # ---------------------------------------------------------
-    # MAIL
+    # RESEND EMAIL API
     # ---------------------------------------------------------
+    RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
-    MAIL_SERVER = os.getenv(
-        "MAIL_SERVER",
-        "smtp.gmail.com"
+    RESEND_FROM_EMAIL = os.getenv(
+        "RESEND_FROM_EMAIL",
+        "onboarding@resend.dev"
     )
 
-    MAIL_PORT = int(
-        os.getenv(
-            "MAIL_PORT",
-            "587"
-        )
-    )
-
-    MAIL_USE_TLS = os.getenv(
-        "MAIL_USE_TLS",
-        "True"
-    ).lower() == "true"
-
-    MAIL_USE_SSL = False
-
-    # SMTP bağlantısının sonsuza kadar beklemesini önler.
+    # ---------------------------------------------------------
+    # EMAIL SETTINGS
+    # ---------------------------------------------------------
     MAIL_TIMEOUT = int(
-        os.getenv(
-            "MAIL_TIMEOUT",
-            "10"
-        )
-    )
-
-    MAIL_USERNAME = os.getenv(
-        "MAIL_USERNAME"
-    )
-
-    MAIL_PASSWORD = os.getenv(
-        "MAIL_PASSWORD"
-    )
-
-    MAIL_DEFAULT_SENDER = os.getenv(
-        "MAIL_DEFAULT_SENDER",
-        MAIL_USERNAME
+        os.getenv("MAIL_TIMEOUT", "10")
     )
