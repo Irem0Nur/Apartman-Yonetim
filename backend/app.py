@@ -9,6 +9,8 @@ from models import (
     Apartment,
     Unit,
     Resident,
+    PreviousPeriodDebt,
+    PreviousPeriodDebtPayment,
 )
 
 from routes.auth import auth_bp
@@ -17,6 +19,7 @@ from routes.units import units_bp
 from routes.people import people_bp
 from routes.dues import dues_bp
 from routes.payments import payments_bp
+from routes.previous_period_debts import previous_period_debts_bp
 from routes.transactions import transactions_bp
 from routes.cash import cash_bp
 from routes.decisions import decisions_bp
@@ -82,6 +85,7 @@ app.register_blueprint(units_bp)
 app.register_blueprint(people_bp)
 app.register_blueprint(dues_bp)
 app.register_blueprint(payments_bp)
+app.register_blueprint(previous_period_debts_bp)
 app.register_blueprint(transactions_bp)
 app.register_blueprint(cash_bp)
 app.register_blueprint(decisions_bp)

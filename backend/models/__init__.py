@@ -9,3 +9,5 @@ from .payment import Payment
 from .transaction import Transaction
 from .decision import Decision
 from .meeting import Meeting
+from .previous_period_debt import PreviousPeriodDebt
+from .previous_period_debt_payment import PreviousPeriodDebtPayment

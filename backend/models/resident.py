@@ -1,11 +1,15 @@
 from datetime import datetime
+
 from extensions import db
 
 
 class Resident(db.Model):
     __tablename__ = "residents"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
 
     unit_id = db.Column(
         db.Integer,

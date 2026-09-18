@@ -68,3 +68,8 @@ class Unit(db.Model):
     back_populates="unit",
     cascade="all, delete-orphan"
 )
+    previous_period_debts = db.relationship(
+    "PreviousPeriodDebt",
+    back_populates="unit",
+    cascade="all, delete-orphan"
+)
