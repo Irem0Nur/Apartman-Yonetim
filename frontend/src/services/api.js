@@ -1055,3 +1055,204 @@ export async function updateApartment(
 
   return data;
 }
+export async function getPreviousPeriodDebts(
+  token,
+  apartmentId
+) {
+  const response = await fetch(
+    `${API_URL}/previous-period-debts/apartment/${apartmentId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Önceki dönem borçları alınamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function createPreviousPeriodDebt(
+  token,
+  debt
+) {
+  const response = await fetch(
+    `${API_URL}/previous-period-debts`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify(debt),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Önceki dönem borcu eklenemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function updatePreviousPeriodDebt(
+  token,
+  debtId,
+  debt
+) {
+  const response = await fetch(
+    `${API_URL}/previous-period-debts/${debtId}`,
+    {
+      method: "PUT",
+
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify(debt),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Önceki dönem borcu güncellenemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function deletePreviousPeriodDebt(
+  token,
+  debtId
+) {
+  const response = await fetch(
+    `${API_URL}/previous-period-debts/${debtId}`,
+    {
+      method: "DELETE",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Önceki dönem borcu silinemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function getPreviousPeriodDebtPayments(
+  token,
+  debtId
+) {
+  const response = await fetch(
+    `${API_URL}/previous-period-debts/${debtId}/payments`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Önceki dönem borcu ödemeleri alınamadı"
+    );
+  }
+
+  return data;
+}
+
+
+export async function createPreviousPeriodDebtPayment(
+  token,
+  debtId,
+  payment
+) {
+  const response = await fetch(
+    `${API_URL}/previous-period-debts/${debtId}/payments`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+
+      body: JSON.stringify(payment),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Önceki dönem borcu ödemesi kaydedilemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function deletePreviousPeriodDebtPayment(
+  token,
+  paymentId
+) {
+  const response = await fetch(
+    `${API_URL}/previous-period-debts/payments/${paymentId}`,
+    {
+      method: "DELETE",
+
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Önceki dönem borcu ödemesi silinemedi"
+    );
+  }
+
+  return data;
+}
