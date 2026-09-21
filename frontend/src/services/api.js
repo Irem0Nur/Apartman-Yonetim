@@ -71,7 +71,26 @@ export async function getCurrentUser(token) {
     );
   }
 
-  return data;
+  /*
+   * Backend bazen kullanıcıyı doğrudan,
+   * bazen { user: {...} } şeklinde döndürebilir.
+   * Dashboard'un her iki durumda da doğru
+   * kullanıcı adını kullanabilmesi için
+   * kullanıcı nesnesini normalize ediyoruz.
+   */
+
+  const currentUser =
+    data.user || data;
+
+  return {
+    ...currentUser,
+
+    name:
+      currentUser.name ||
+      currentUser.full_name ||
+      currentUser.username ||
+      "Kullanıcı",
+  };
 }
 
 
