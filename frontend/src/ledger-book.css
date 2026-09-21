@@ -1,0 +1,173 @@
+/* İşletme Defteri - kağıt defter görünümü.
+   Mevcut CSS dosyanın en altına ekle. Sınıflar "kd-" ile başlar, çakışma olmaz. */
+
+.kd-kitap {
+  --kd-kagit: #fbf8ef;
+  --kd-cizgi: #6b7a90;
+  --kd-cizgi-ince: #c9d2de;
+  --kd-murekkep: #1f2937;
+  --kd-cilt: #6b4423;
+
+  background: var(--kd-kagit);
+  border: 6px solid var(--kd-cilt);
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  padding: 14px 18px 18px;
+  font-family: Georgia, "Times New Roman", serif;
+  color: var(--kd-murekkep);
+  margin-top: 16px;
+}
+
+.kd-baslik {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid var(--kd-cizgi);
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+}
+.kd-baslik h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  letter-spacing: 3px;
+  color: var(--kd-murekkep);
+}
+.kd-baslik span {
+  font-size: 0.85rem;
+  min-width: 140px;
+}
+.kd-baslik span:last-child {
+  text-align: right;
+}
+
+/* iki sayfa yan yana, ortada cilt sırtı */
+.kd-sayfalar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.kd-sayfa {
+  padding: 0 10px;
+  min-width: 0;
+}
+.kd-gider {
+  border-right: 3px double var(--kd-cizgi);
+  box-shadow: inset -14px 0 14px -14px rgba(0, 0, 0, 0.25);
+}
+.kd-gelir {
+  box-shadow: inset 14px 0 14px -14px rgba(0, 0, 0, 0.25);
+}
+
+.kd-sayfa-ust {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.kd-sayfa-ust h2 {
+  margin: 0;
+  font-size: 1rem;
+  letter-spacing: 4px;
+  color: var(--kd-murekkep);
+}
+
+/* tablo */
+.kd-tablo {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.82rem;
+  background: transparent;
+}
+.kd-tablo th,
+.kd-tablo td {
+  border: 1px solid var(--kd-cizgi-ince);
+  border-left-color: var(--kd-cizgi);
+  border-right-color: var(--kd-cizgi);
+  padding: 0 6px;
+  height: 30px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--kd-murekkep);
+  background: transparent;
+}
+.kd-tablo thead th {
+  border: 1px solid var(--kd-cizgi);
+  border-bottom-width: 2px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1.15;
+  padding: 4px;
+  text-align: center;
+  background: rgba(107, 122, 144, 0.08);
+}
+
+.kd-c-sira    { width: 8%; }
+.kd-c-tarih   { width: 15%; }
+.kd-c-belge   { width: 11%; }
+.kd-c-odeme   { width: 13%; }
+.kd-c-tutar   { width: 16%; }
+.kd-c-islem   { width: 17%; }
+
+.kd-ort { text-align: center; }
+.kd-sag { text-align: right; font-variant-numeric: tabular-nums; }
+.kd-bos td:first-child { color: #b6bfcc; }
+.kd-not { color: #6b7280; }
+
+.kd-tablo tfoot td {
+  border-top: 2px solid var(--kd-cizgi);
+  font-weight: 700;
+  height: 34px;
+}
+.kd-toplam-etiket {
+  text-align: right;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+}
+
+.kd-islem {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+.kd-islem button {
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border: 1px solid var(--kd-cizgi);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--kd-murekkep);
+  cursor: pointer;
+}
+.kd-islem button.danger {
+  color: #b91c1c;
+  border-color: #b91c1c;
+}
+
+/* dar ekran: tek sayfa, mevcut Giderler/Gelirler sekmeleri çalışmaya devam eder */
+@media (max-width: 1000px) {
+  .kd-sayfalar { grid-template-columns: 1fr; }
+  .kd-gider { border-right: 0; box-shadow: none; }
+  .kd-gelir { box-shadow: none; }
+  .kd-sayfa { overflow-x: auto; }
+  .kd-tablo { min-width: 560px; }
+  .kd-baslik { flex-direction: column; align-items: center; gap: 2px; }
+  .kd-mobile-hidden { display: none; }
+}
+
+/* yazdırma: menü, butonlar gizli; iki sayfa yan yana, A4 yatay */
+@media print {
+  .sidebar,
+  .ledger-toolbar,
+  .ledger-mobile-tabs,
+  .ledger-header-actions,
+  .kd-no-print {
+    display: none !important;
+  }
+  .kd-kitap { box-shadow: none; border-width: 2px; margin-top: 0; }
+  .kd-sayfalar { grid-template-columns: 1fr 1fr; }
+  .kd-mobile-hidden { display: block !important; }
+  @page { size: A4 landscape; margin: 10mm; }
+}

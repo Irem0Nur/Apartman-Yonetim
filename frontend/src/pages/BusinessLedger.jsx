@@ -1,12 +1,6 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import {
-  useNavigate,
-} from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import {
   getApartments,
@@ -33,30 +27,23 @@ const MONTHS = [
   { value: 12, label: "Aralık" },
 ];
 
+const MIN_ROWS = 14; // kağıt defterdeki gibi boş çizgili satırlar kalsın
+
 
 function formatMoney(value) {
-  return Number(value || 0).toLocaleString(
-    "tr-TR",
-    {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }
-  );
+  return Number(value || 0).toLocaleString("tr-TR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 
 function formatDate(value) {
   if (!value) {
-    return "-";
+    return "";
   }
 
-  const date = new Date(
-    `${value}T00:00:00`
-  );
-
-  return date.toLocaleDateString(
-    "tr-TR"
-  );
+  return new Date(`${value}T00:00:00`).toLocaleDateString("tr-TR");
 }
 
 
@@ -65,72 +52,41 @@ function BusinessLedger() {
 
   const now = new Date();
 
-  const [apartment, setApartment] =
-    useState(null);
+  const [apartment, setApartment] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [payments, setPayments] = useState([]);
 
-  const [transactions, setTransactions] =
-    useState([]);
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1);
 
-  const [payments, setPayments] =
-    useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
-  const [year, setYear] =
-    useState(now.getFullYear());
+  const [activeTab, setActiveTab] = useState("expense");
 
-  const [month, setMonth] =
-    useState(now.getMonth() + 1);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  const [message, setMessage] =
-    useState("");
-
-  const [activeTab, setActiveTab] =
-    useState("expense");
-
-  const [modalOpen, setModalOpen] =
-    useState(false);
-
-  const [editingTransaction, setEditingTransaction] =
-    useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   const [form, setForm] = useState({
     transaction_type: "expense",
     category: "",
     amount: "",
-    transaction_date:
-      now.toISOString().slice(0, 10),
+    transaction_date: now.toISOString().slice(0, 10),
     document_number: "",
     payment_method: "",
     description: "",
   });
 
 
-  async function loadLedger(
-    selectedApartment,
-    selectedYear,
-    selectedMonth
-  ) {
-    const token =
-      localStorage.getItem(
-        "access_token"
-      );
+  async function loadLedger(selectedApartment, selectedYear, selectedMonth) {
+    const token = localStorage.getItem("access_token");
 
-    if (
-      !token ||
-      !selectedApartment
-    ) {
+    if (!token || !selectedApartment) {
       return;
     }
 
-    const [
-      transactionData,
-      paymentData,
-    ] = await Promise.all([
+    const [transactionData, paymentData] = await Promise.all([
       getTransactions(
         token,
         selectedApartment.id,
@@ -146,22 +102,14 @@ function BusinessLedger() {
       ),
     ]);
 
-    setTransactions(
-      transactionData || []
-    );
-
-    setPayments(
-      paymentData || []
-    );
+    setTransactions(transactionData || []);
+    setPayments(paymentData || []);
   }
 
 
   useEffect(() => {
     async function loadPage() {
-      const token =
-        localStorage.getItem(
-          "access_token"
-        );
+      const token = localStorage.getItem("access_token");
 
       if (!token) {
         navigate("/");
@@ -172,45 +120,27 @@ function BusinessLedger() {
         setLoading(true);
         setError("");
 
-        const apartments =
-          await getApartments(token);
+        const apartments = await getApartments(token);
 
-        if (
-          !apartments ||
-          apartments.length === 0
-        ) {
-          navigate(
-            "/apartman-olustur"
-          );
+        if (!apartments || apartments.length === 0) {
+          navigate("/apartman-olustur");
           return;
         }
 
-        const selectedApartment =
-          apartments[0];
+        const selectedApartment = apartments[0];
 
-        setApartment(
-          selectedApartment
-        );
+        setApartment(selectedApartment);
 
-        await loadLedger(
-          selectedApartment,
-          year,
-          month
-        );
-
+        await loadLedger(selectedApartment, year, month);
       } catch (err) {
         console.error(err);
-        setError(
-          err.message ||
-          "İşletme defteri yüklenemedi."
-        );
+        setError(err.message || "İşletme defteri yüklenemedi.");
       } finally {
         setLoading(false);
       }
     }
 
     loadPage();
-
   }, [navigate]);
 
 
@@ -224,46 +154,27 @@ function BusinessLedger() {
         setLoading(true);
         setError("");
 
-        await loadLedger(
-          apartment,
-          year,
-          month
-        );
-
+        await loadLedger(apartment, year, month);
       } catch (err) {
         console.error(err);
-
-        setError(
-          err.message ||
-          "Kayıtlar alınamadı."
-        );
+        setError(err.message || "Kayıtlar alınamadı.");
       } finally {
         setLoading(false);
       }
     }
 
     reload();
-
-  }, [
-    apartment,
-    year,
-    month,
-  ]);
+  }, [apartment, year, month]);
 
 
-  function openCreateModal(
-    type
-  ) {
-    setEditingTransaction(
-      null
-    );
+  function openCreateModal(type) {
+    setEditingTransaction(null);
 
     setForm({
       transaction_type: type,
       category: "",
       amount: "",
-      transaction_date:
-        `${year}-${String(month).padStart(2, "0")}-01`,
+      transaction_date: `${year}-${String(month).padStart(2, "0")}-01`,
       document_number: "",
       payment_method: "",
       description: "",
@@ -274,41 +185,17 @@ function BusinessLedger() {
   }
 
 
-  function openEditModal(
-    transaction
-  ) {
-    setEditingTransaction(
-      transaction
-    );
+  function openEditModal(transaction) {
+    setEditingTransaction(transaction);
 
     setForm({
-      transaction_type:
-        transaction.transaction_type ||
-        "expense",
-
-      category:
-        transaction.category ||
-        "",
-
-      amount:
-        transaction.amount ??
-        "",
-
-      transaction_date:
-        transaction.transaction_date ||
-        "",
-
-      document_number:
-        transaction.document_number ||
-        "",
-
-      payment_method:
-        transaction.payment_method ||
-        "",
-
-      description:
-        transaction.description ||
-        "",
+      transaction_type: transaction.transaction_type || "expense",
+      category: transaction.category || "",
+      amount: transaction.amount ?? "",
+      transaction_date: transaction.transaction_date || "",
+      document_number: transaction.document_number || "",
+      payment_method: transaction.payment_method || "",
+      description: transaction.description || "",
     });
 
     setError("");
@@ -318,24 +205,17 @@ function BusinessLedger() {
 
   function closeModal() {
     setModalOpen(false);
-    setEditingTransaction(
-      null
-    );
+    setEditingTransaction(null);
   }
 
 
   function handleChange(event) {
-    const {
-      name,
-      value,
-    } = event.target;
+    const { name, value } = event.target;
 
-    setForm(
-      (previous) => ({
-        ...previous,
-        [name]: value,
-      })
-    );
+    setForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
   }
 
 
@@ -344,33 +224,21 @@ function BusinessLedger() {
       return;
     }
 
-    const token =
-      localStorage.getItem(
-        "access_token"
-      );
+    const token = localStorage.getItem("access_token");
 
     if (!token) {
       navigate("/");
       return;
     }
 
-    await loadLedger(
-      apartment,
-      year,
-      month
-    );
+    await loadLedger(apartment, year, month);
   }
 
 
-  async function handleSubmit(
-    event
-  ) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
-    const token =
-      localStorage.getItem(
-        "access_token"
-      );
+    const token = localStorage.getItem("access_token");
 
     if (!token || !apartment) {
       return;
@@ -381,84 +249,43 @@ function BusinessLedger() {
       setMessage("");
 
       const payload = {
-        apartment_id:
-          apartment.id,
-
-        transaction_type:
-          form.transaction_type,
-
-        category:
-          form.category.trim(),
-
-        amount:
-          form.amount,
-
-        transaction_date:
-          form.transaction_date,
-
-        document_number:
-          form.document_number.trim(),
-
-        payment_method:
-          form.payment_method.trim(),
-
-        description:
-          form.description.trim(),
+        apartment_id: apartment.id,
+        transaction_type: form.transaction_type,
+        category: form.category.trim(),
+        amount: form.amount,
+        transaction_date: form.transaction_date,
+        document_number: form.document_number.trim(),
+        payment_method: form.payment_method.trim(),
+        description: form.description.trim(),
       };
 
-      if (
-        editingTransaction
-      ) {
-        await updateTransaction(
-          token,
-          editingTransaction.id,
-          payload
-        );
-
-        setMessage(
-          "Kayıt güncellendi."
-        );
-
+      if (editingTransaction) {
+        await updateTransaction(token, editingTransaction.id, payload);
+        setMessage("Kayıt güncellendi.");
       } else {
-        await createTransaction(
-          token,
-          payload
-        );
-
-        setMessage(
-          "Kayıt eklendi."
-        );
+        await createTransaction(token, payload);
+        setMessage("Kayıt eklendi.");
       }
 
       closeModal();
 
       await refreshLedger();
-
     } catch (err) {
-      setError(
-        err.message ||
-        "Kayıt kaydedilemedi."
-      );
+      setError(err.message || "Kayıt kaydedilemedi.");
     }
   }
 
 
-  async function handleDelete(
-    transactionId
-  ) {
-    const approved =
-      window.confirm(
-        "Bu kaydı silmek istediğinize emin misiniz?"
-      );
+  async function handleDelete(transactionId) {
+    const approved = window.confirm(
+      "Bu kaydı silmek istediğinize emin misiniz?"
+    );
 
     if (!approved) {
       return;
     }
 
-    const token =
-      localStorage.getItem(
-        "access_token"
-      );
+    const token = localStorage.getItem("access_token");
 
     if (!token) {
       navigate("/");
@@ -468,152 +295,71 @@ function BusinessLedger() {
     try {
       setError("");
 
-      await deleteTransaction(
-        token,
-        transactionId
-      );
+      await deleteTransaction(token, transactionId);
 
       await refreshLedger();
 
-      setMessage(
-        "Kayıt silindi."
-      );
-
+      setMessage("Kayıt silindi.");
     } catch (err) {
-      setError(
-        err.message ||
-        "Kayıt silinemedi."
-      );
+      setError(err.message || "Kayıt silinemedi.");
     }
   }
 
 
   const incomeRows = useMemo(() => {
-    const manualIncome =
-      transactions
-        .filter(
-          (item) =>
-            item.transaction_type ===
-            "income"
-        )
-        .map(
-          (item) => ({
-            ...item,
-            source:
-              "manual",
-          })
-        );
+    const manualIncome = transactions
+      .filter((item) => item.transaction_type === "income")
+      .map((item) => ({
+        ...item,
+        source: "manual",
+      }));
 
-    const automaticIncome =
-      payments.map(
-        (payment) => ({
-          id:
-            `payment-${payment.id}`,
+    const automaticIncome = payments.map((payment) => ({
+      id: `payment-${payment.id}`,
+      transaction_type: "income",
+      category: "Aidat Tahsilatı",
+      amount: Number(payment.amount || 0),
+      transaction_date: payment.payment_date,
+      document_number: payment.document_number || "",
+      payment_method: payment.payment_method || "",
+      description: payment.description || "Aidat ödemesi",
+      source: "payment",
+    }));
 
-          transaction_type:
-            "income",
-
-          category:
-            "Aidat Tahsilatı",
-
-          amount:
-            Number(
-              payment.amount || 0
-            ),
-
-          transaction_date:
-            payment.payment_date,
-
-          document_number:
-            payment.document_number ||
-            "",
-
-          payment_method:
-            payment.payment_method ||
-            "",
-
-          description:
-            payment.description ||
-            "Aidat ödemesi",
-
-          source:
-            "payment",
-        })
-      );
-
-    return [
-      ...manualIncome,
-      ...automaticIncome,
-    ].sort(
-      (a, b) =>
-        String(
-          b.transaction_date || ""
-        ).localeCompare(
-          String(
-            a.transaction_date || ""
-          )
-        )
+    return [...manualIncome, ...automaticIncome].sort((a, b) =>
+      String(b.transaction_date || "").localeCompare(
+        String(a.transaction_date || "")
+      )
     );
-
-  }, [
-    transactions,
-    payments,
-  ]);
+  }, [transactions, payments]);
 
 
   const expenseRows = useMemo(
     () =>
       transactions
-        .filter(
-          (item) =>
-            item.transaction_type ===
-            "expense"
-        )
-        .map(
-          (item) => ({
-            ...item,
-            source:
-              "manual",
-          })
-        ),
-
+        .filter((item) => item.transaction_type === "expense")
+        .map((item) => ({
+          ...item,
+          source: "manual",
+        })),
     [transactions]
   );
 
 
-  const totalIncome =
-    incomeRows.reduce(
-      (sum, item) =>
-        sum +
-        Number(
-          item.amount || 0
-        ),
-      0
-    );
+  const totalIncome = incomeRows.reduce(
+    (sum, item) => sum + Number(item.amount || 0),
+    0
+  );
 
+  const totalExpense = expenseRows.reduce(
+    (sum, item) => sum + Number(item.amount || 0),
+    0
+  );
 
-  const totalExpense =
-    expenseRows.reduce(
-      (sum, item) =>
-        sum +
-        Number(
-          item.amount || 0
-        ),
-      0
-    );
-
-
-  const netCash =
-    totalIncome -
-    totalExpense;
-
+  const netCash = totalIncome - totalExpense;
 
   const monthName =
-    MONTHS.find(
-      (item) =>
-        item.value ===
-        Number(month)
-    )?.label || "";
+    MONTHS.find((item) => item.value === Number(month))?.label || "";
 
 
   function printLedger() {
@@ -621,15 +367,8 @@ function BusinessLedger() {
   }
 
 
-  if (
-    loading &&
-    !apartment
-  ) {
-    return (
-      <div className="loading">
-        İşletme defteri yükleniyor...
-      </div>
-    );
+  if (loading && !apartment) {
+    return <div className="loading">İşletme defteri yükleniyor...</div>;
   }
 
 
@@ -639,128 +378,66 @@ function BusinessLedger() {
       <aside className="sidebar">
 
         <div className="sidebar-logo">
-
-          <div className="sidebar-logo-icon">
-            AY
-          </div>
-
-          <span>
-            ApartmanYönet
-          </span>
-
+          <div className="sidebar-logo-icon">AY</div>
+          <span>ApartmanYönet</span>
         </div>
-
 
         <nav className="sidebar-menu">
 
           <button
             className="menu-item"
-            onClick={() =>
-              navigate(
-                "/dashboard"
-              )
-            }
+            onClick={() => navigate("/dashboard")}
           >
             🏠 Dashboard
           </button>
 
+          <div className="menu-title">APARTMAN</div>
 
-          <div className="menu-title">
-            APARTMAN
-          </div>
-
-
-          <button className="menu-item">
-            🏢 Apartman Bilgileri
-          </button>
-
+          <button className="menu-item">🏢 Apartman Bilgileri</button>
 
           <button
             className="menu-item"
-            onClick={() =>
-              navigate(
-                "/daireler"
-              )
-            }
+            onClick={() => navigate("/daireler")}
           >
             🚪 Daireler
           </button>
 
-
           <button
             className="menu-item"
-            onClick={() =>
-              navigate(
-                "/kisiler"
-              )
-            }
+            onClick={() => navigate("/kisiler")}
           >
             👥 Kişiler
           </button>
 
-
-          <div className="menu-title">
-            FİNANS
-          </div>
-
+          <div className="menu-title">FİNANS</div>
 
           <button
             className="menu-item"
-            onClick={() =>
-              navigate(
-                "/aidatlar"
-              )
-            }
+            onClick={() => navigate("/aidatlar")}
           >
             💳 Aidatlar
           </button>
 
+          <button className="menu-item">💰 Ödemeler</button>
 
-          <button className="menu-item">
-            💰 Ödemeler
-          </button>
+          <button className="menu-item">📉 Gelir / Gider</button>
 
-
-          <button className="menu-item">
-            📉 Gelir / Gider
-          </button>
-
-
-          <button className="menu-item">
-            🏦 Kasa
-          </button>
-
+          <button className="menu-item">🏦 Kasa</button>
 
           <button
             className="menu-item active"
-            onClick={() =>
-              navigate(
-                "/isletme-defteri"
-              )
-            }
+            onClick={() => navigate("/isletme-defteri")}
           >
             📒 İşletme Defteri
           </button>
 
+          <div className="menu-title">YÖNETİM</div>
 
-          <div className="menu-title">
-            YÖNETİM
-          </div>
+          <button className="menu-item">📒 Karar Defteri</button>
 
+          <button className="menu-item">📅 Toplantılar</button>
 
-          <button className="menu-item">
-            📒 Karar Defteri
-          </button>
-
-
-          <button className="menu-item">
-            📅 Toplantılar
-          </button>
-
-
-          <button className="menu-item">
-            ✅ Yapılacaklar
-          </button>
+          <button className="menu-item">✅ Yapılacaklar</button>
 
         </nav>
 
@@ -772,32 +449,18 @@ function BusinessLedger() {
         <header className="ledger-header">
 
           <div>
-
-            <h1>
-              İşletme Defteri
-            </h1>
+            <h1>İşletme Defteri</h1>
 
             <p>
               {apartment?.name || "Apartman"}
-              {apartment?.block_name
-                ? ` • ${apartment.block_name}`
-                : ""}
+              {apartment?.block_name ? ` • ${apartment.block_name}` : ""}
             </p>
-
           </div>
 
-
           <div className="ledger-header-actions">
-
-            <button
-              className="secondary-button"
-              onClick={
-                printLedger
-              }
-            >
+            <button className="secondary-button" onClick={printLedger}>
               🖨️ Yazdır / PDF
             </button>
-
           </div>
 
         </header>
@@ -806,132 +469,59 @@ function BusinessLedger() {
         <section className="ledger-toolbar">
 
           <div className="dues-period-field">
-
-            <label>
-              Ay
-            </label>
+            <label>Ay</label>
 
             <select
               value={month}
-              onChange={(event) =>
-                setMonth(
-                  Number(
-                    event.target.value
-                  )
-                )
-              }
+              onChange={(event) => setMonth(Number(event.target.value))}
             >
-
-              {MONTHS.map(
-                (item) => (
-                  <option
-                    key={
-                      item.value
-                    }
-                    value={
-                      item.value
-                    }
-                  >
-                    {item.label}
-                  </option>
-                )
-              )}
-
+              {MONTHS.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
             </select>
-
           </div>
 
-
           <div className="dues-period-field">
-
-            <label>
-              Yıl
-            </label>
+            <label>Yıl</label>
 
             <input
               type="number"
               min="2020"
               max="2100"
               value={year}
-              onChange={(event) =>
-                setYear(
-                  Number(
-                    event.target.value
-                  )
-                )
-              }
+              onChange={(event) => setYear(Number(event.target.value))}
             />
-
           </div>
 
-
           <div className="ledger-period">
-
             {monthName} {year}
-
           </div>
 
         </section>
 
 
-        {message && (
-          <div className="success-message">
-            {message}
-          </div>
-        )}
+        {message && <div className="success-message">{message}</div>}
 
-
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+        {error && <div className="error-message">{error}</div>}
 
 
         <section className="ledger-summary">
 
           <div className="ledger-stat income">
-
-            <span>
-              Toplam Gelir
-            </span>
-
-            <strong>
-              {formatMoney(
-                totalIncome
-              )} TL
-            </strong>
-
+            <span>Toplam Gelir</span>
+            <strong>{formatMoney(totalIncome)} TL</strong>
           </div>
-
 
           <div className="ledger-stat expense">
-
-            <span>
-              Toplam Gider
-            </span>
-
-            <strong>
-              {formatMoney(
-                totalExpense
-              )} TL
-            </strong>
-
+            <span>Toplam Gider</span>
+            <strong>{formatMoney(totalExpense)} TL</strong>
           </div>
 
-
           <div className="ledger-stat net">
-
-            <span>
-              Net Kasa
-            </span>
-
-            <strong>
-              {formatMoney(
-                netCash
-              )} TL
-            </strong>
-
+            <span>Net Kasa</span>
+            <strong>{formatMoney(netCash)} TL</strong>
           </div>
 
         </section>
@@ -940,32 +530,15 @@ function BusinessLedger() {
         <div className="ledger-mobile-tabs">
 
           <button
-            className={
-              activeTab === "expense"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveTab(
-                "expense"
-              )
-            }
+            className={activeTab === "expense" ? "active" : ""}
+            onClick={() => setActiveTab("expense")}
           >
             Giderler
           </button>
 
-
           <button
-            className={
-              activeTab === "income"
-                ? "active"
-                : ""
-            }
-            onClick={() =>
-              setActiveTab(
-                "income"
-              )
-            }
+            className={activeTab === "income" ? "active" : ""}
+            onClick={() => setActiveTab("income")}
           >
             Gelirler
           </button>
@@ -973,48 +546,39 @@ function BusinessLedger() {
         </div>
 
 
-        <section className="ledger-columns">
+        <section className="kd-kitap">
 
-          <LedgerTable
-            title="GİDER"
-            type="expense"
-            rows={expenseRows}
-            mobileHidden={
-              activeTab !== "expense"
-            }
-            onAdd={() =>
-              openCreateModal(
-                "expense"
-              )
-            }
-            onEdit={
-              openEditModal
-            }
-            onDelete={
-              handleDelete
-            }
-          />
+          <div className="kd-baslik">
+            <span>{apartment?.name}</span>
+            <h2>İŞLETME HESABI DEFTERİ</h2>
+            <span>
+              {monthName} {year}
+            </span>
+          </div>
 
+          <div className="kd-sayfalar">
 
-          <LedgerTable
-            title="GELİR"
-            type="income"
-            rows={incomeRows}
-            mobileHidden={
-              activeTab !== "income"
-            }
-            onAdd={() =>
-              openCreateModal(
-                "income"
-              )
-            }
-            onEdit={
-              openEditModal
-            }
-            onDelete={
-              handleDelete
-            }
-          />
+            <LedgerTable
+              title="GİDER"
+              type="expense"
+              rows={expenseRows}
+              mobileHidden={activeTab !== "expense"}
+              onAdd={() => openCreateModal("expense")}
+              onEdit={openEditModal}
+              onDelete={handleDelete}
+            />
+
+            <LedgerTable
+              title="GELİR"
+              type="income"
+              rows={incomeRows}
+              mobileHidden={activeTab !== "income"}
+              onAdd={() => openCreateModal("income")}
+              onEdit={openEditModal}
+              onDelete={handleDelete}
+            />
+
+          </div>
 
         </section>
 
@@ -1026,10 +590,7 @@ function BusinessLedger() {
         <div
           className="ledger-modal-overlay"
           onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
+            if (event.target === event.currentTarget) {
               closeModal();
             }
           }}
@@ -1040,29 +601,21 @@ function BusinessLedger() {
             <div className="ledger-modal-header">
 
               <div>
-
                 <h2>
                   {editingTransaction
                     ? "Kaydı Düzenle"
-                    : form.transaction_type ===
-                      "income"
+                    : form.transaction_type === "income"
                     ? "Gelir Ekle"
                     : "Gider Ekle"}
                 </h2>
 
-                <p>
-                  İşletme defterine kayıt ekleyin.
-                </p>
-
+                <p>İşletme defterine kayıt ekleyin.</p>
               </div>
-
 
               <button
                 type="button"
                 className="modal-close"
-                onClick={
-                  closeModal
-                }
+                onClick={closeModal}
               >
                 ×
               </button>
@@ -1070,197 +623,104 @@ function BusinessLedger() {
             </div>
 
 
-            <form
-              onSubmit={
-                handleSubmit
-              }
-            >
+            <form onSubmit={handleSubmit}>
 
               <div className="ledger-form-grid">
 
                 <div className="form-group">
-
-                  <label>
-                    Tür
-                  </label>
+                  <label>Tür</label>
 
                   <select
                     name="transaction_type"
-                    value={
-                      form.transaction_type
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.transaction_type}
+                    onChange={handleChange}
                   >
-
-                    <option value="expense">
-                      Gider
-                    </option>
-
-                    <option value="income">
-                      Gelir
-                    </option>
-
+                    <option value="expense">Gider</option>
+                    <option value="income">Gelir</option>
                   </select>
-
                 </div>
 
-
                 <div className="form-group">
-
-                  <label>
-                    Tür / Kategori
-                  </label>
+                  <label>Tür / Kategori</label>
 
                   <input
                     name="category"
-                    value={
-                      form.category
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.category}
+                    onChange={handleChange}
                     placeholder={
-                      form.transaction_type ===
-                      "income"
+                      form.transaction_type === "income"
                         ? "Diğer gelir"
                         : "Elektrik faturası"
                     }
                     required
                   />
-
                 </div>
 
-
                 <div className="form-group">
-
-                  <label>
-                    Tarih
-                  </label>
+                  <label>Tarih</label>
 
                   <input
                     type="date"
                     name="transaction_date"
-                    value={
-                      form.transaction_date
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.transaction_date}
+                    onChange={handleChange}
                     required
                   />
-
                 </div>
 
-
                 <div className="form-group">
-
-                  <label>
-                    Tutar
-                  </label>
+                  <label>Tutar</label>
 
                   <input
                     type="number"
                     name="amount"
                     min="0.01"
                     step="0.01"
-                    value={
-                      form.amount
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.amount}
+                    onChange={handleChange}
                     placeholder="0.00"
                     required
                   />
-
                 </div>
 
-
                 <div className="form-group">
-
-                  <label>
-                    Ödeme / Tahsilat Türü
-                  </label>
+                  <label>Ödeme / Tahsilat Türü</label>
 
                   <select
                     name="payment_method"
-                    value={
-                      form.payment_method
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.payment_method}
+                    onChange={handleChange}
                   >
-
-                    <option value="">
-                      Seçiniz
-                    </option>
-
-                    <option value="Nakit">
-                      Nakit
-                    </option>
-
-                    <option value="Banka">
-                      Banka
-                    </option>
-
-                    <option value="EFT/Havale">
-                      EFT / Havale
-                    </option>
-
-                    <option value="Kart">
-                      Kart
-                    </option>
-
-                    <option value="Diğer">
-                      Diğer
-                    </option>
-
+                    <option value="">Seçiniz</option>
+                    <option value="Nakit">Nakit</option>
+                    <option value="Banka">Banka</option>
+                    <option value="EFT/Havale">EFT / Havale</option>
+                    <option value="Kart">Kart</option>
+                    <option value="Diğer">Diğer</option>
                   </select>
-
                 </div>
 
-
                 <div className="form-group">
-
-                  <label>
-                    Belge No
-                  </label>
+                  <label>Belge No</label>
 
                   <input
                     name="document_number"
-                    value={
-                      form.document_number
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.document_number}
+                    onChange={handleChange}
                     placeholder="Fatura / makbuz no"
                   />
-
                 </div>
 
-
                 <div className="form-group full">
-
-                  <label>
-                    Açıklama / Not
-                  </label>
+                  <label>Açıklama / Not</label>
 
                   <textarea
                     name="description"
-                    value={
-                      form.description
-                    }
-                    onChange={
-                      handleChange
-                    }
+                    value={form.description}
+                    onChange={handleChange}
                     rows="4"
                     placeholder="İşlemle ilgili not..."
                   />
-
                 </div>
 
               </div>
@@ -1271,21 +731,13 @@ function BusinessLedger() {
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={
-                    closeModal
-                  }
+                  onClick={closeModal}
                 >
                   Vazgeç
                 </button>
 
-
-                <button
-                  type="submit"
-                  className="primary-button"
-                >
-                  {editingTransaction
-                    ? "Güncelle"
-                    : "Kaydet"}
+                <button type="submit" className="primary-button">
+                  {editingTransaction ? "Güncelle" : "Kaydet"}
                 </button>
 
               </div>
@@ -1312,213 +764,167 @@ function LedgerTable({
   onEdit,
   onDelete,
 }) {
+  // Defterde kayıtlar eskiden yeniye sıralanır
+  const sortedRows = [...rows].sort((a, b) =>
+    String(a.transaction_date || "").localeCompare(
+      String(b.transaction_date || "")
+    )
+  );
+
+  const emptyCount = Math.max(MIN_ROWS - sortedRows.length, 0);
+
+  const total = sortedRows.reduce(
+    (sum, item) => sum + Number(item.amount || 0),
+    0
+  );
+
   return (
     <section
-      className={`ledger-panel ${
-        mobileHidden
-          ? "ledger-mobile-hidden"
-          : ""
+      className={`kd-sayfa kd-${type} ${
+        mobileHidden ? "kd-mobile-hidden" : ""
       }`}
     >
 
-      <div className="ledger-panel-header">
+      <div className="kd-sayfa-ust">
 
-        <div>
-
-          <h2>
-            {title}
-          </h2>
-
-          <span>
-            {rows.length} kayıt
-          </span>
-
-        </div>
-
+        <h2>{title}</h2>
 
         <button
-          className="primary-button small"
-          onClick={
-            onAdd
-          }
+          className="primary-button small kd-no-print"
+          onClick={onAdd}
         >
-          + {type === "income"
-            ? "Gelir"
-            : "Gider"} Ekle
+          + {type === "income" ? "Gelir" : "Gider"} Ekle
         </button>
 
       </div>
 
 
-      <div className="ledger-table-wrapper">
+      <table className="kd-tablo">
 
-        <table className="ledger-table">
+        <thead>
+          <tr>
+            <th className="kd-c-sira">
+              Sıra
+              <br />
+              No
+            </th>
+            <th className="kd-c-tarih">Tarih</th>
+            <th className="kd-c-belge">
+              Belge
+              <br />
+              No
+            </th>
+            <th className="kd-c-aciklama">Açıklama</th>
+            <th className="kd-c-odeme">
+              Ödeme
+              <br />
+              Türü
+            </th>
+            <th className="kd-c-tutar">Tutar</th>
+            <th className="kd-c-islem kd-no-print">İşlem</th>
+          </tr>
+        </thead>
 
-          <thead>
+        <tbody>
 
-            <tr>
+          {sortedRows.map((row, index) => (
 
-              <th>
-                Tarih
-              </th>
+            <tr
+              key={row.source === "payment" ? row.id : `manual-${row.id}`}
+            >
 
-              <th>
-                Belge No
-              </th>
+              <td className="kd-ort">{index + 1}</td>
 
-              <th>
-                Açıklama
-              </th>
+              <td className="kd-ort">
+                {formatDate(row.transaction_date)}
+              </td>
 
-              <th>
-                Tutar
-              </th>
+              <td className="kd-ort">{row.document_number || ""}</td>
 
-              <th>
-                Ödeme Türü
-              </th>
+              <td title={row.description || ""}>
 
-              <th>
-                Not
-              </th>
+                <strong>{row.category || ""}</strong>
 
-              <th>
-                İşlem
-              </th>
+                {row.description && (
+                  <small className="kd-not"> — {row.description}</small>
+                )}
+
+                {row.source === "payment" && (
+                  <span className="ledger-auto-badge kd-no-print">
+                    Otomatik
+                  </span>
+                )}
+
+              </td>
+
+              <td className="kd-ort">{row.payment_method || ""}</td>
+
+              <td className="kd-sag">{formatMoney(row.amount)}</td>
+
+              <td className="kd-ort kd-no-print">
+
+                {row.source === "manual" ? (
+
+                  <div className="kd-islem">
+
+                    <button type="button" onClick={() => onEdit(row)}>
+                      Düzenle
+                    </button>
+
+                    <button
+                      type="button"
+                      className="danger"
+                      onClick={() => onDelete(row.id)}
+                    >
+                      Sil
+                    </button>
+
+                  </div>
+
+                ) : (
+
+                  <span className="ledger-auto-text">Sistem</span>
+
+                )}
+
+              </td>
 
             </tr>
 
-          </thead>
+          ))}
 
 
-          <tbody>
+          {Array.from({ length: emptyCount }).map((_, i) => (
 
-            {rows.length === 0 ? (
+            <tr key={`bos-${i}`} className="kd-bos">
 
-              <tr>
+              <td className="kd-ort">{sortedRows.length + i + 1}</td>
+              <td />
+              <td />
+              <td />
+              <td />
+              <td />
+              <td className="kd-no-print" />
 
-                <td
-                  colSpan="7"
-                  className="ledger-empty"
-                >
-                  Bu dönem için kayıt bulunmuyor.
-                </td>
+            </tr>
 
-              </tr>
+          ))}
 
-            ) : (
+        </tbody>
 
-              rows.map(
-                (row) => (
+        <tfoot>
+          <tr>
+            <td colSpan={5} className="kd-toplam-etiket">
+              Toplam
+            </td>
+            <td className="kd-sag kd-toplam-deger">
+              {formatMoney(total)}
+            </td>
+            <td className="kd-no-print" />
+          </tr>
+        </tfoot>
 
-                  <tr
-                    key={
-                      row.source ===
-                      "payment"
-                        ? row.id
-                        : `manual-${row.id}`
-                    }
-                  >
-
-                    <td>
-                      {formatDate(
-                        row.transaction_date
-                      )}
-                    </td>
-
-                    <td>
-                      {row.document_number ||
-                        "-"}
-                    </td>
-
-                    <td>
-
-                      <strong>
-                        {row.category ||
-                          "-"}
-                      </strong>
-
-                      {row.source ===
-                        "payment" && (
-                        <span className="ledger-auto-badge">
-                          Otomatik
-                        </span>
-                      )}
-
-                    </td>
-
-                    <td>
-                      <strong>
-                        {formatMoney(
-                          row.amount
-                        )} TL
-                      </strong>
-                    </td>
-
-                    <td>
-                      {row.payment_method ||
-                        "-"}
-                    </td>
-
-                    <td>
-                      {row.description ||
-                        "-"}
-                    </td>
-
-                    <td>
-
-                      {row.source ===
-                      "manual" ? (
-
-                        <div className="ledger-actions">
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              onEdit(
-                                row
-                              )
-                            }
-                          >
-                            Düzenle
-                          </button>
-
-                          <button
-                            type="button"
-                            className="danger"
-                            onClick={() =>
-                              onDelete(
-                                row.id
-                              )
-                            }
-                          >
-                            Sil
-                          </button>
-
-                        </div>
-
-                      ) : (
-
-                        <span className="ledger-auto-text">
-                          Sistem
-                        </span>
-
-                      )}
-
-                    </td>
-
-                  </tr>
-
-                )
-              )
-
-            )}
-
-          </tbody>
-
-        </table>
-
-      </div>
+      </table>
 
     </section>
   );
