@@ -1,4 +1,6 @@
 import os
+from datetime import timedelta
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -22,6 +24,9 @@ class Config:
         "JWT_SECRET_KEY",
         "dev-secret-key-change-this"
     )
+
+    # Kullanıcı oturumunun geçerlilik süresi
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
 
     # ---------------------------------------------------------
     # RESEND EMAIL API

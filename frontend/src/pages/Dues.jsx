@@ -1152,6 +1152,116 @@ function Dues() {
     }, [dues]);
 
 
+  // ==================================================
+  // GEÇMİŞTEN GELEN BORÇLARI DAİRE BAZINDA TOPLA
+  // ==================================================
+
+  const previousDebtByUnit =
+    useMemo(() => {
+      const result = {};
+
+      previousDebts.forEach(
+        (debt) => {
+
+          // Öncelikle unit_id üzerinden eşleştiriyoruz.
+          if (debt.unit_id !== null &&
+              debt.unit_id !== undefined) {
+
+            const idKey =
+              `id:${debt.unit_id}`;
+
+            if (!result[idKey]) {
+              result[idKey] = 0;
+            }
+
+            result[idKey] +=
+              Number(
+                debt.remaining_amount || 0
+              );
+          }
+
+
+          // unit_id gelmezse blok + daire
+          // üzerinden de eşleştirebilmek için
+          // ikinci bir anahtar oluşturuyoruz.
+
+          const block =
+            String(
+              debt.block_name || ""
+            ).trim();
+
+          const unitNumber =
+            String(
+              debt.unit_number || ""
+            ).trim();
+
+          const locationKey =
+            `location:${block}__${unitNumber}`;
+
+          if (!result[locationKey]) {
+            result[locationKey] = 0;
+          }
+
+          result[locationKey] +=
+            Number(
+              debt.remaining_amount || 0
+            );
+        }
+      );
+
+      return result;
+
+    }, [previousDebts]);
+
+
+  // ==================================================
+  // DAİRENİN GEÇMİŞTEN GELEN BORCUNU BUL
+  // ==================================================
+
+  function getPreviousDebtForDue(due) {
+
+    // Önce unit_id varsa onu kullan.
+    if (
+      due.unit_id !== null &&
+      due.unit_id !== undefined
+    ) {
+
+      const idKey =
+        `id:${due.unit_id}`;
+
+      if (
+        previousDebtByUnit[idKey] !==
+        undefined
+      ) {
+        return previousDebtByUnit[idKey];
+      }
+    }
+
+
+    // unit_id yoksa blok + daire
+    // üzerinden eşleştir.
+
+    const block =
+      String(
+        due.block_name || ""
+      ).trim();
+
+    const unitNumber =
+      String(
+        due.unit_number || ""
+      ).trim();
+
+    const locationKey =
+      `location:${block}__${unitNumber}`;
+
+    return (
+      previousDebtByUnit[
+        locationKey
+      ] || 0
+    );
+  }
+
+
   function getStatusLabel(status) {
     if (status === "paid") {
       return "Ödendi";
@@ -1419,6 +1529,11 @@ function Dues() {
                       Daire Sahibi
                     </th>
 
+                    {/* YENİ SÜTUN */}
+                    <th>
+                      Geçmişten Gelen Borç
+                    </th>
+
                     <th>
                       Dönem
                     </th>
@@ -1501,6 +1616,24 @@ function Dues() {
                             </span>
 
                           )}
+
+                        </td>
+
+
+                        {/* ==================================================
+                            GEÇMİŞTEN GELEN BORÇ
+                        ================================================== */}
+
+                        <td>
+
+                          <strong>
+                            {formatMoney(
+                              getPreviousDebtForDue(
+                                due
+                              )
+                            )}{" "}
+                            TL
+                          </strong>
 
                         </td>
 

@@ -6,7 +6,10 @@ from extensions import db
 class Transaction(db.Model):
     __tablename__ = "transactions"
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(
+        db.Integer,
+        primary_key=True
+    )
 
     apartment_id = db.Column(
         db.Integer,
@@ -34,8 +37,18 @@ class Transaction(db.Model):
         nullable=False
     )
 
+    document_number = db.Column(
+        db.String(100),
+        nullable=True
+    )
+
+    payment_method = db.Column(
+        db.String(50),
+        nullable=True
+    )
+
     description = db.Column(
-        db.String(255),
+        db.String(500),
         nullable=True
     )
 

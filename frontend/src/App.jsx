@@ -4,33 +4,21 @@ import {
   Route,
 } from "react-router-dom";
 
-import ProtectedRoute from "./components/ProtectedRoute";
-
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import VerifyEmail from "./pages/VerifyEmail";
-
 import Dashboard from "./pages/Dashboard";
 import CreateApartment from "./pages/CreateApartment";
-import ApartmentInfo from "./pages/ApartmentInfo";
 import Units from "./pages/Units";
 import People from "./pages/People";
-import Dues from "./pages/Dues";
-import Payments from "./pages/Payments";
-import IncomeExpense from "./pages/IncomeExpense";
-import Cash from "./pages/Cash";
-import Decisions from "./pages/Decisions";
-import Meetings from "./pages/Meetings";
+import Dues from "./pages/dues";
+import BusinessLedger from "./pages/BusinessLedger";
 
 
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
 
-        {/* ========================= */}
-        {/* PUBLIC SAYFALAR */}
-        {/* ========================= */}
+      <Routes>
 
         <Route
           path="/"
@@ -43,115 +31,37 @@ function App() {
         />
 
         <Route
-          path="/email-dogrula"
-          element={<VerifyEmail />}
-        />
-
-
-        {/* ========================= */}
-        {/* KORUMALI SAYFALAR */}
-        {/* ========================= */}
-
-        <Route
           path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
+          element={<Dashboard />}
         />
 
         <Route
           path="/apartman-olustur"
-          element={
-            <ProtectedRoute>
-              <CreateApartment />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/apartman-bilgileri"
-          element={
-            <ProtectedRoute>
-              <ApartmentInfo />
-            </ProtectedRoute>
-          }
+          element={<CreateApartment />}
         />
 
         <Route
           path="/daireler"
-          element={
-            <ProtectedRoute>
-              <Units />
-            </ProtectedRoute>
-          }
+          element={<Units />}
         />
 
         <Route
           path="/kisiler"
-          element={
-            <ProtectedRoute>
-              <People />
-            </ProtectedRoute>
-          }
+          element={<People />}
         />
 
         <Route
           path="/aidatlar"
-          element={
-            <ProtectedRoute>
-              <Dues />
-            </ProtectedRoute>
-          }
+          element={<Dues />}
         />
 
         <Route
-          path="/odemeler"
-          element={
-            <ProtectedRoute>
-              <Payments />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/gelir-gider"
-          element={
-            <ProtectedRoute>
-              <IncomeExpense />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/kasa"
-          element={
-            <ProtectedRoute>
-              <Cash />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/karar-defteri"
-          element={
-            <ProtectedRoute>
-              <Decisions />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/toplantilar"
-          element={
-            <ProtectedRoute>
-              <Meetings />
-            </ProtectedRoute>
-          }
+          path="/isletme-defteri"
+          element={<BusinessLedger />}
         />
 
       </Routes>
+
     </BrowserRouter>
   );
 }

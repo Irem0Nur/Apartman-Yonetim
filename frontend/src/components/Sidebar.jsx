@@ -130,6 +130,15 @@ function Sidebar({ active }) {
   <span>Oturumdan Çık</span>
 </button>
 
+<button
+  className="menu-item"
+  onClick={() =>
+    navigate("/isletme-defteri")
+  }
+>
+  📒 İşletme Defteri
+</button>
+
       </nav>
     </aside>
   );

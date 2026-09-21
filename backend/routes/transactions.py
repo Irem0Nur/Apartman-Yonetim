@@ -27,6 +27,8 @@ def transaction_to_dict(transaction):
             if transaction.transaction_date
             else None
         ),
+        "document_number": transaction.document_number,
+        "payment_method": transaction.payment_method,
         "description": transaction.description,
         "created_at": (
             transaction.created_at.isoformat()
@@ -43,6 +45,35 @@ def get_owned_apartment(apartment_id, user_id):
     ).first()
 
 
+def parse_transaction_date(value):
+    if not value:
+        return datetime.today().date()
+
+    try:
+        return datetime.strptime(
+            value,
+            "%Y-%m-%d"
+        ).date()
+    except ValueError:
+        return None
+
+
+def validate_amount(value):
+    try:
+        amount = Decimal(str(value))
+    except Exception:
+        return None
+
+    if amount <= 0:
+        return None
+
+    return amount
+
+
+# =========================================================
+# GET TRANSACTIONS
+# =========================================================
+
 @transactions_bp.route(
     "/apartment/<int:apartment_id>",
     methods=["GET"]
@@ -58,16 +89,27 @@ def get_transactions(apartment_id):
 
     if not apartment:
         return jsonify({
-            "message": "Apartman bulunamadı veya yetkiniz yok."
+            "message":
+            "Apartman bulunamadı veya yetkiniz yok."
         }), 404
 
     query = Transaction.query.filter_by(
         apartment_id=apartment_id
     )
 
-    year = request.args.get("year", type=int)
-    month = request.args.get("month", type=int)
-    transaction_type = request.args.get("type")
+    year = request.args.get(
+        "year",
+        type=int
+    )
+
+    month = request.args.get(
+        "month",
+        type=int
+    )
+
+    transaction_type = request.args.get(
+        "type"
+    )
 
     if year:
         query = query.filter(
@@ -85,9 +127,13 @@ def get_transactions(apartment_id):
             ) == month
         )
 
-    if transaction_type in ["income", "expense"]:
+    if transaction_type in [
+        "income",
+        "expense"
+    ]:
         query = query.filter(
-            Transaction.transaction_type == transaction_type
+            Transaction.transaction_type
+            == transaction_type
         )
 
     transactions = (
@@ -105,6 +151,10 @@ def get_transactions(apartment_id):
     ]), 200
 
 
+# =========================================================
+# FINANCIAL SUMMARY
+# =========================================================
+
 @transactions_bp.route(
     "/summary/<int:apartment_id>",
     methods=["GET"]
@@ -120,29 +170,37 @@ def get_financial_summary(apartment_id):
 
     if not apartment:
         return jsonify({
-            "message": "Apartman bulunamadı veya yetkiniz yok."
+            "message":
+            "Apartman bulunamadı veya yetkiniz yok."
         }), 404
 
-    year = request.args.get("year", type=int)
-    month = request.args.get("month", type=int)
+    year = request.args.get(
+        "year",
+        type=int
+    )
+
+    month = request.args.get(
+        "month",
+        type=int
+    )
 
     if not year or not month:
         return jsonify({
-            "message": "Yıl ve ay bilgisi zorunludur."
+            "message":
+            "Yıl ve ay bilgisi zorunludur."
         }), 400
-
-    # ---------------------------------
-    # MANUEL GELİR / GİDER KAYITLARI
-    # ---------------------------------
 
     transactions = (
         Transaction.query
         .filter(
-            Transaction.apartment_id == apartment_id,
+            Transaction.apartment_id
+            == apartment_id,
+
             db.extract(
                 "year",
                 Transaction.transaction_date
             ) == year,
+
             db.extract(
                 "month",
                 Transaction.transaction_date
@@ -155,7 +213,9 @@ def get_financial_summary(apartment_id):
     total_expense = Decimal("0.00")
 
     for transaction in transactions:
-        amount = Decimal(str(transaction.amount))
+        amount = Decimal(
+            str(transaction.amount)
+        )
 
         if transaction.transaction_type == "income":
             other_income += amount
@@ -163,23 +223,25 @@ def get_financial_summary(apartment_id):
         elif transaction.transaction_type == "expense":
             total_expense += amount
 
-    # ---------------------------------
-    # AİDAT TAHSİLATLARI
-    #
-    # Aidat dönemi değil,
-    # gerçek ödeme tarihi dikkate alınır.
-    # ---------------------------------
-
     payments = (
         Payment.query
-        .join(Due, Payment.due_id == Due.id)
-        .join(Unit, Due.unit_id == Unit.id)
+        .join(
+            Due,
+            Payment.due_id == Due.id
+        )
+        .join(
+            Unit,
+            Due.unit_id == Unit.id
+        )
         .filter(
-            Unit.apartment_id == apartment_id,
+            Unit.apartment_id
+            == apartment_id,
+
             db.extract(
                 "year",
                 Payment.payment_date
             ) == year,
+
             db.extract(
                 "month",
                 Payment.payment_date
@@ -196,44 +258,87 @@ def get_financial_summary(apartment_id):
         Decimal("0.00")
     )
 
-    # ---------------------------------
-    # GENEL HESAPLAR
-    # ---------------------------------
+    total_income = (
+        dues_income +
+        other_income
+    )
 
-    total_income = dues_income + other_income
-
-    net_balance = total_income - total_expense
+    net_balance = (
+        total_income -
+        total_expense
+    )
 
     return jsonify({
         "year": year,
         "month": month,
-
-        "dues_income": float(dues_income),
-
-        "other_income": float(other_income),
-
-        "total_income": float(total_income),
-
-        "total_expense": float(total_expense),
-
-        "net_balance": float(net_balance),
-
-        "payment_count": len(payments),
+        "dues_income": float(
+            dues_income
+        ),
+        "other_income": float(
+            other_income
+        ),
+        "total_income": float(
+            total_income
+        ),
+        "total_expense": float(
+            total_expense
+        ),
+        "net_balance": float(
+            net_balance
+        ),
+        "payment_count": len(
+            payments
+        ),
     }), 200
 
 
-@transactions_bp.route("", methods=["POST"])
+# =========================================================
+# CREATE TRANSACTION
+# =========================================================
+
+@transactions_bp.route(
+    "",
+    methods=["POST"]
+)
 @jwt_required()
 def create_transaction():
-    user_id = int(get_jwt_identity())
+    user_id = int(
+        get_jwt_identity()
+    )
+
     data = request.get_json() or {}
 
-    apartment_id = data.get("apartment_id")
-    transaction_type = data.get("transaction_type")
-    category = data.get("category")
-    amount = data.get("amount")
-    transaction_date_text = data.get("transaction_date")
-    description = data.get("description")
+    apartment_id = data.get(
+        "apartment_id"
+    )
+
+    transaction_type = data.get(
+        "transaction_type"
+    )
+
+    category = str(
+        data.get("category", "")
+    ).strip()
+
+    amount = data.get(
+        "amount"
+    )
+
+    transaction_date_text = data.get(
+        "transaction_date"
+    )
+
+    document_number = str(
+        data.get("document_number", "")
+    ).strip() or None
+
+    payment_method = str(
+        data.get("payment_method", "")
+    ).strip() or None
+
+    description = str(
+        data.get("description", "")
+    ).strip() or None
 
     apartment = get_owned_apartment(
         apartment_id,
@@ -242,65 +347,229 @@ def create_transaction():
 
     if not apartment:
         return jsonify({
-            "message": "Apartman bulunamadı veya yetkiniz yok."
+            "message":
+            "Apartman bulunamadı veya yetkiniz yok."
         }), 404
 
-    if transaction_type not in ["income", "expense"]:
+    if transaction_type not in [
+        "income",
+        "expense"
+    ]:
         return jsonify({
-            "message": "İşlem türü gelir veya gider olmalıdır."
+            "message":
+            "İşlem türü gelir veya gider olmalıdır."
         }), 400
 
     if not category:
         return jsonify({
-            "message": "Kategori zorunludur."
+            "message":
+            "Kategori zorunludur."
         }), 400
 
-    try:
-        amount_decimal = Decimal(str(amount))
-    except Exception:
+    amount_decimal = validate_amount(
+        amount
+    )
+
+    if amount_decimal is None:
         return jsonify({
-            "message": "Geçerli bir tutar giriniz."
+            "message":
+            "Geçerli ve sıfırdan büyük bir tutar giriniz."
         }), 400
 
-    if amount_decimal <= 0:
+    transaction_date = parse_transaction_date(
+        transaction_date_text
+    )
+
+    if transaction_date is None:
         return jsonify({
-            "message": "Tutar sıfırdan büyük olmalıdır."
+            "message":
+            "Tarih YYYY-MM-DD formatında olmalıdır."
         }), 400
-
-    if transaction_date_text:
-        try:
-            transaction_date = datetime.strptime(
-                transaction_date_text,
-                "%Y-%m-%d"
-            ).date()
-        except ValueError:
-            return jsonify({
-                "message": "Tarih YYYY-MM-DD formatında olmalıdır."
-            }), 400
-    else:
-        transaction_date = datetime.today().date()
 
     transaction = Transaction(
         apartment_id=apartment.id,
         transaction_type=transaction_type,
-        category=category.strip(),
+        category=category,
         amount=amount_decimal,
         transaction_date=transaction_date,
-        description=(
-            description.strip()
-            if description
-            else None
-        ),
+        document_number=document_number,
+        payment_method=payment_method,
+        description=description,
     )
 
     db.session.add(transaction)
     db.session.commit()
 
     return jsonify({
-        "message": "Gelir/Gider kaydı başarıyla eklendi.",
-        "transaction": transaction_to_dict(transaction)
+        "message":
+        "Gelir/Gider kaydı başarıyla eklendi.",
+
+        "transaction":
+        transaction_to_dict(transaction)
     }), 201
 
+
+# =========================================================
+# UPDATE TRANSACTION
+# =========================================================
+
+@transactions_bp.route(
+    "/<int:transaction_id>",
+    methods=["PUT"]
+)
+@jwt_required()
+def update_transaction(transaction_id):
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    transaction = (
+        Transaction.query
+        .join(
+            Apartment,
+            Transaction.apartment_id
+            == Apartment.id
+        )
+        .filter(
+            Transaction.id
+            == transaction_id,
+
+            Apartment.manager_id
+            == user_id
+        )
+        .first()
+    )
+
+    if not transaction:
+        return jsonify({
+            "message":
+            "Kayıt bulunamadı veya yetkiniz yok."
+        }), 404
+
+    data = request.get_json() or {}
+
+    transaction_type = data.get(
+        "transaction_type",
+        transaction.transaction_type
+    )
+
+    category = str(
+        data.get(
+            "category",
+            transaction.category
+        )
+    ).strip()
+
+    amount = data.get(
+        "amount",
+        transaction.amount
+    )
+
+    transaction_date_text = data.get(
+        "transaction_date",
+        (
+            transaction.transaction_date.isoformat()
+            if transaction.transaction_date
+            else None
+        )
+    )
+
+    document_number = str(
+        data.get(
+            "document_number",
+            transaction.document_number or ""
+        )
+    ).strip() or None
+
+    payment_method = str(
+        data.get(
+            "payment_method",
+            transaction.payment_method or ""
+        )
+    ).strip() or None
+
+    description = str(
+        data.get(
+            "description",
+            transaction.description or ""
+        )
+    ).strip() or None
+
+    if transaction_type not in [
+        "income",
+        "expense"
+    ]:
+        return jsonify({
+            "message":
+            "İşlem türü gelir veya gider olmalıdır."
+        }), 400
+
+    if not category:
+        return jsonify({
+            "message":
+            "Kategori zorunludur."
+        }), 400
+
+    amount_decimal = validate_amount(
+        amount
+    )
+
+    if amount_decimal is None:
+        return jsonify({
+            "message":
+            "Geçerli ve sıfırdan büyük bir tutar giriniz."
+        }), 400
+
+    transaction_date = parse_transaction_date(
+        transaction_date_text
+    )
+
+    if transaction_date is None:
+        return jsonify({
+            "message":
+            "Tarih YYYY-MM-DD formatında olmalıdır."
+        }), 400
+
+    transaction.transaction_type = (
+        transaction_type
+    )
+
+    transaction.category = category
+
+    transaction.amount = (
+        amount_decimal
+    )
+
+    transaction.transaction_date = (
+        transaction_date
+    )
+
+    transaction.document_number = (
+        document_number
+    )
+
+    transaction.payment_method = (
+        payment_method
+    )
+
+    transaction.description = (
+        description
+    )
+
+    db.session.commit()
+
+    return jsonify({
+        "message":
+        "Gelir/Gider kaydı güncellendi.",
+
+        "transaction":
+        transaction_to_dict(transaction)
+    }), 200
+
+
+# =========================================================
+# DELETE TRANSACTION
+# =========================================================
 
 @transactions_bp.route(
     "/<int:transaction_id>",
@@ -308,29 +577,40 @@ def create_transaction():
 )
 @jwt_required()
 def delete_transaction(transaction_id):
-    user_id = int(get_jwt_identity())
+    user_id = int(
+        get_jwt_identity()
+    )
 
     transaction = (
         Transaction.query
         .join(
             Apartment,
-            Transaction.apartment_id == Apartment.id
+            Transaction.apartment_id
+            == Apartment.id
         )
         .filter(
-            Transaction.id == transaction_id,
-            Apartment.manager_id == user_id
+            Transaction.id
+            == transaction_id,
+
+            Apartment.manager_id
+            == user_id
         )
         .first()
     )
 
     if not transaction:
         return jsonify({
-            "message": "Kayıt bulunamadı veya yetkiniz yok."
+            "message":
+            "Kayıt bulunamadı veya yetkiniz yok."
         }), 404
 
-    db.session.delete(transaction)
+    db.session.delete(
+        transaction
+    )
+
     db.session.commit()
 
     return jsonify({
-        "message": "Kayıt başarıyla silindi."
+        "message":
+        "Kayıt başarıyla silindi."
     }), 200
