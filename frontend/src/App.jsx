@@ -14,6 +14,7 @@ import ApartmentInfo from "./pages/ApartmentInfo";
 
 import Units from "./pages/Units";
 import People from "./pages/People";
+
 import Dues from "./pages/Dues";
 import Payments from "./pages/Payments";
 
@@ -28,34 +29,42 @@ import BusinessLedger from "./pages/BusinessLedger";
 function App() {
   return (
     <BrowserRouter>
-
       <Routes>
 
-        {/* Giriş */}
+        {/* =========================
+            AUTH
+        ========================= */}
+
         <Route
           path="/"
           element={<Login />}
         />
 
-        {/* Kayıt */}
         <Route
           path="/register"
           element={<Register />}
         />
 
-        {/* E-posta doğrulama */}
         <Route
           path="/verify-email"
           element={<VerifyEmail />}
         />
 
-        {/* Ana sayfa */}
+
+        {/* =========================
+            DASHBOARD
+        ========================= */}
+
         <Route
           path="/dashboard"
           element={<Dashboard />}
         />
 
-        {/* Apartman */}
+
+        {/* =========================
+            APARTMAN
+        ========================= */}
+
         <Route
           path="/apartman-olustur"
           element={<CreateApartment />}
@@ -66,62 +75,97 @@ function App() {
           element={<ApartmentInfo />}
         />
 
-        {/* Daireler */}
+
+        {/* =========================
+            DAİRELER
+        ========================= */}
+
         <Route
           path="/daireler"
           element={<Units />}
         />
 
-        {/* Kişiler */}
+
+        {/* =========================
+            KİŞİLER
+        ========================= */}
+
         <Route
           path="/kisiler"
           element={<People />}
         />
 
-        {/* Aidatlar */}
+
+        {/* =========================
+            AİDATLAR
+        ========================= */}
+
         <Route
           path="/aidatlar"
           element={<Dues />}
         />
 
-        {/* Ödemeler */}
+
+        {/* =========================
+            ÖDEMELER
+        ========================= */}
+
         <Route
           path="/odemeler"
           element={<Payments />}
         />
 
-        {/* Gelir / Gider */}
+
+        {/* =========================
+            GELİR / GİDER
+        ========================= */}
+
         <Route
           path="/gelir-gider"
           element={<IncomeExpense />}
         />
 
-        {/* Kasa */}
+
+        {/* =========================
+            KASA
+        ========================= */}
+
         <Route
           path="/kasa"
           element={<Cash />}
         />
 
-        {/* Kararlar */}
+
+        {/* =========================
+            KARARLAR
+        ========================= */}
+
         <Route
           path="/kararlar"
           element={<Decisions />}
         />
 
-        {/* Toplantılar */}
+
+        {/* =========================
+            TOPLANTILAR
+        ========================= */}
+
         <Route
           path="/toplantilar"
           element={<Meetings />}
         />
 
-        {/* İşletme Defteri */}
+
+        {/* =========================
+            İŞLETME DEFTERİ
+        ========================= */}
+
         <Route
           path="/isletme-defteri"
           element={<BusinessLedger />}
         />
 
       </Routes>
-
     </BrowserRouter>
   );
 }
