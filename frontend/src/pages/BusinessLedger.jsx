@@ -11,6 +11,8 @@ import {
   deleteTransaction,
 } from "../services/api";
 
+import "../ledger-book.css";
+
 
 const MONTHS = [
   { value: 1, label: "Ocak" },
