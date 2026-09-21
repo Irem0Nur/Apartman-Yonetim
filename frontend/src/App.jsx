@@ -10,7 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateApartment from "./pages/CreateApartment";
 import Units from "./pages/Units";
 import People from "./pages/People";
-import Dues from "./pages/dues";
+import Dues from "./pages/Dues";
 import BusinessLedger from "./pages/BusinessLedger";
 
 
