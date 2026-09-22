@@ -1,7 +1,29 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+const THEMES = [
+  { id: "indigo", label: "Mor", color: "#4f46e5" },
+  { id: "emerald", label: "Yeşil", color: "#059669" },
+  { id: "blue", label: "Mavi", color: "#2563eb" },
+  { id: "amber", label: "Turuncu", color: "#d97706" },
+  { id: "rose", label: "Pembe", color: "#e11d48" },
+];
+
+const THEME_STORAGE_KEY = "app_theme";
 
 function Sidebar({ active }) {
   const navigate = useNavigate();
+
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem(THEME_STORAGE_KEY) || "indigo"
+  );
+
+  // Sayfa her açıldığında (ve tema her değiştiğinde)
+  // seçili temayı <html> etiketine uygula.
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   function handleLogout() {
     localStorage.removeItem("access_token");
@@ -130,15 +152,39 @@ function Sidebar({ active }) {
       📅 Toplantılar
       </button>
 
-      <button
-  type="button"
-  className="logout-button"
-  onClick={handleLogout}
->
-  <span>🚪</span>
-  <span>Oturumdan Çık</span>
-</button>
       </nav>
+
+      <div className="theme-picker">
+        <span className="theme-picker-label">Tema</span>
+
+        <div className="theme-picker-dots">
+          {THEMES.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={
+                theme === item.id
+                  ? "theme-dot active"
+                  : "theme-dot"
+              }
+              style={{ backgroundColor: item.color }}
+              title={item.label}
+              aria-label={item.label}
+              onClick={() => setTheme(item.id)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        className="logout-button"
+        onClick={handleLogout}
+      >
+        <span>🚪</span>
+        <span>Oturumdan Çık</span>
+      </button>
+
     </aside>
   );
 }

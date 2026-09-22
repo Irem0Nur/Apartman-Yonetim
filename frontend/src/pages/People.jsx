@@ -54,6 +54,7 @@ function People() {
     unit_id: "",
     relationship_type: "owner",
     is_resident: false,
+    is_manager: false,
     notes: "",
   });
 
@@ -162,7 +163,7 @@ function People() {
   }
 
 
-  function openCreateModal() {
+  function openCreateModal(isManager = false) {
     setEditingRelation(null);
 
     setForm({
@@ -181,6 +182,9 @@ function People() {
 
       is_resident:
         false,
+
+      is_manager:
+        isManager,
 
       notes: "",
     });
@@ -215,6 +219,11 @@ function People() {
       is_resident:
         Boolean(
           relation.is_resident
+        ),
+
+      is_manager:
+        Boolean(
+          relation.person.is_manager
         ),
 
       notes:
@@ -326,6 +335,9 @@ function People() {
         is_resident:
           form.is_resident,
 
+        is_manager:
+          form.is_manager,
+
         notes:
           form.notes.trim(),
       };
@@ -428,17 +440,35 @@ function People() {
           </div>
 
 
-          <button
-            className="primary-button"
-            onClick={
-              openCreateModal
-            }
-            disabled={
-              units.length === 0
-            }
-          >
-            + Yeni Kişi
-          </button>
+          <div className="people-header-actions">
+
+            <button
+              className="secondary-button"
+              onClick={() =>
+                openCreateModal(true)
+              }
+              disabled={
+                units.length === 0
+              }
+              title="Aidatı alınmayan, yalnızca gönüllü ödeme yapan yönetici ekleyin"
+            >
+              + Yönetici Ekle
+            </button>
+
+
+            <button
+              className="primary-button"
+              onClick={() =>
+                openCreateModal(false)
+              }
+              disabled={
+                units.length === 0
+              }
+            >
+              + Yeni Kişi
+            </button>
+
+          </div>
 
         </header>
 
@@ -488,6 +518,24 @@ function People() {
                 people.filter(
                   (person) =>
                     person.is_resident
+                ).length
+              }
+            </strong>
+
+          </div>
+
+
+          <div className="mini-stat">
+
+            <span>
+              Yönetici
+            </span>
+
+            <strong>
+              {
+                people.filter(
+                  (person) =>
+                    person.person?.is_manager
                 ).length
               }
             </strong>
@@ -552,8 +600,8 @@ function People() {
 
               <button
                 className="primary-button"
-                onClick={
-                  openCreateModal
+                onClick={() =>
+                  openCreateModal(false)
                 }
               >
                 İlk Kişiyi Ekle
@@ -620,6 +668,12 @@ function People() {
                                 .full_name
                             }
                           </strong>
+
+                          {relation.person.is_manager && (
+                            <span className="role-badge manager-badge">
+                              Yönetici
+                            </span>
+                          )}
 
                           {relation.person.email && (
                             <div className="person-email">
@@ -755,6 +809,8 @@ function People() {
                   {
                     editingRelation
                       ? "Kişiyi Düzenle"
+                      : form.is_manager
+                      ? "Yönetici Ekle"
                       : "Yeni Kişi"
                   }
                 </h2>
@@ -976,6 +1032,29 @@ function People() {
                 <span>
                   Bu kişi şu anda bu
                   dairede oturuyor
+                </span>
+
+              </label>
+
+
+              <label className="checkbox-field">
+
+                <input
+                  type="checkbox"
+                  name="is_manager"
+                  checked={
+                    form.is_manager
+                  }
+                  onChange={
+                    handleChange
+                  }
+                />
+
+                <span>
+                  Bu kişi apartman yöneticisi
+                  — bağlı olduğu daireden
+                  aidat/tahakkuk alınmasın,
+                  sadece gönüllü ödeme yapabilsin
                 </span>
 
               </label>
