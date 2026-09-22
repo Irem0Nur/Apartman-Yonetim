@@ -35,6 +35,14 @@ class Person(db.Model):
         nullable=True
     )
 
+    # Yönetici olarak işaretlenen kişilerin
+    # bağlı olduğu dairelerden tahakkuk alınmaz.
+    is_manager = db.Column(
+        db.Boolean,
+        default=False,
+        nullable=False
+    )
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,

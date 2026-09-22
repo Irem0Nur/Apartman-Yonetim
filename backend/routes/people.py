@@ -57,6 +57,7 @@ def relation_to_dict(relation):
             "phone": person.phone,
             "email": person.email,
             "notes": person.notes,
+            "is_manager": bool(person.is_manager),
         },
 
         "unit": {
@@ -152,6 +153,10 @@ def create_person():
         data.get("notes", "")
     ).strip() or None
 
+    is_manager = bool(
+        data.get("is_manager", False)
+    )
+
     unit_id = data.get("unit_id")
 
     relationship_type = str(
@@ -193,6 +198,7 @@ def create_person():
         phone=phone,
         email=email,
         notes=notes,
+        is_manager=is_manager,
     )
 
     db.session.add(person)
@@ -291,6 +297,11 @@ def update_person(relation_id):
         person.notes = str(
             data["notes"]
         ).strip() or None
+
+    if "is_manager" in data:
+        person.is_manager = bool(
+            data["is_manager"]
+        )
 
     if "unit_id" in data:
         new_unit = get_owned_unit(

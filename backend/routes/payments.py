@@ -309,9 +309,13 @@ def create_payment():
         Decimal("0.00")
     )
 
-    remaining_amount = Decimal(str(due.amount)) - paid_amount
+    due_amount = Decimal(str(due.amount))
+    remaining_amount = due_amount - paid_amount
 
-    if payment_amount > remaining_amount:
+    # Tahakkuku 0 olan daireler (yönetici daireleri) için
+    # üst sınır uygulanmaz; istedikleri zaman gönüllü ödeme
+    # ekleyebilirler.
+    if due_amount > 0 and payment_amount > remaining_amount:
         return jsonify({
             "message": (
                 f"Ödeme tutarı kalan borçtan fazla olamaz. "

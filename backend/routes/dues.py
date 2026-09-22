@@ -34,6 +34,20 @@ def get_owner_names(unit):
     ]
 
 
+def unit_has_manager(unit):
+    """
+    Bir dairede aktif olarak bağlı, yönetici (is_manager)
+    olarak işaretlenmiş bir kişi var mı?
+    Varsa bu dairenin aidatı hep 0 olarak oluşturulur.
+    """
+    return any(
+        relation.is_active
+        and relation.person
+        and relation.person.is_manager
+        for relation in unit.person_relations
+    )
+
+
 def calculate_due_payment(due):
     total_paid = sum(
         (
@@ -54,7 +68,12 @@ def calculate_due_payment(due):
     if remaining_amount < 0:
         remaining_amount = Decimal("0")
 
-    if total_paid <= 0:
+    if due_amount == 0:
+        # Yönetici dairesi: tahakkuk yok, sadece
+        # gönüllü ödeme yapılmışsa "ödendi" göster.
+        status = "paid" if total_paid > 0 else "exempt"
+
+    elif total_paid <= 0:
         status = "unpaid"
 
     elif total_paid < due_amount:
@@ -91,6 +110,9 @@ def due_to_dict(due):
             due.unit.block_name,
 
         "owners": owners,
+
+        "is_manager_unit":
+            unit_has_manager(due.unit),
 
         "year": due.year,
 
@@ -277,13 +299,17 @@ def generate_dues():
             skipped_count += 1
             continue
 
-        amount = (
-            unit.due_amount
-            if unit.due_amount is not None
-            else apartment.default_due_amount
-        )
+        if unit_has_manager(unit):
+            # Yönetici dairesinden tahakkuk alınmaz.
+            amount = 0
+        else:
+            amount = (
+                unit.due_amount
+                if unit.due_amount is not None
+                else apartment.default_due_amount
+            )
 
-        amount = amount or 0
+            amount = amount or 0
 
         due = Due(
             unit_id=unit.id,
