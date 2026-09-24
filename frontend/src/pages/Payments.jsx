@@ -7,6 +7,12 @@ import {
   getPayments,
   getYearlyPaymentReport,
   deletePayment,
+  getPreviousPeriodDebts,
+  createPreviousPeriodDebt,
+  deletePreviousPeriodDebt,
+  getPreviousPeriodDebtPayments,
+  createPreviousPeriodDebtPayment,
+  deletePreviousPeriodDebtPayment,
 } from "../services/api";
 
 
@@ -46,6 +52,15 @@ function Payments() {
     },
   });
 
+  // Önceki dönemden devreden borçlar (apartmanın tamamı)
+  const [previousDebts, setPreviousDebts] = useState([]);
+
+  const [previousDebtsTotals, setPreviousDebtsTotals] = useState({
+    amount: 0,
+    paid: 0,
+    remaining: 0,
+  });
+
   const [year, setYear] = useState(now.getFullYear());
 
   const [month, setMonth] = useState(
@@ -57,6 +72,31 @@ function Payments() {
   const [message, setMessage] = useState("");
 
   const [error, setError] = useState("");
+
+  // Borç yönetimi modalı
+  const [debtModalOpen, setDebtModalOpen] = useState(false);
+  const [debtModalUnit, setDebtModalUnit] = useState(null);
+  const [debtError, setDebtError] = useState("");
+
+  const [newDebtForm, setNewDebtForm] = useState({
+    amount: "",
+    period: "",
+    description: "",
+  });
+
+  // Bir borcun ödeme geçmişi açıldığında burada tutulur
+  const [expandedDebtId, setExpandedDebtId] = useState(null);
+  const [debtPaymentsMap, setDebtPaymentsMap] = useState({});
+
+  // Hangi borca ödeme (tahsilat) giriliyor
+  const [activePaymentDebtId, setActivePaymentDebtId] = useState(null);
+
+  const [paymentForm, setPaymentForm] = useState({
+    amount: "",
+    payment_date: now.toISOString().slice(0, 10),
+    payment_method: "",
+    description: "",
+  });
 
 
   useEffect(() => {
@@ -110,6 +150,7 @@ function Payments() {
 
     if (activeTab === "yearly") {
       loadYearlyReport();
+      loadPreviousDebts();
     }
 
   }, [
@@ -164,6 +205,29 @@ function Payments() {
   }
 
 
+  async function loadPreviousDebts() {
+    try {
+      const data = await getPreviousPeriodDebts(
+        token,
+        apartment.id
+      );
+
+      setPreviousDebts(data.debts || []);
+
+      setPreviousDebtsTotals(
+        data.totals || {
+          amount: 0,
+          paid: 0,
+          remaining: 0,
+        }
+      );
+
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+
   async function handleDelete(paymentId) {
     const confirmed = window.confirm(
       "Bu ödeme kaydını silmek istediğinize emin misiniz?\n\n" +
@@ -191,6 +255,247 @@ function Payments() {
 
     } catch (err) {
       setError(err.message);
+    }
+  }
+
+
+  // ---------------------------------------------------
+  // DEVREDEN BORÇ YARDIMCILARI
+  // ---------------------------------------------------
+
+  function getUnitDebts(unitId) {
+    return previousDebts.filter(
+      (debt) => debt.unit_id === unitId
+    );
+  }
+
+  function getUnitDebtRemaining(unitId) {
+    return getUnitDebts(unitId).reduce(
+      (total, debt) =>
+        total + Number(debt.remaining_amount || 0),
+      0
+    );
+  }
+
+
+  function openDebtModal(row) {
+    setDebtModalUnit({
+      id: row.unit_id,
+      block_name: row.block_name,
+      unit_number: row.unit_number,
+      owners: row.owners,
+    });
+
+    setNewDebtForm({
+      amount: "",
+      period: "",
+      description: "",
+    });
+
+    setExpandedDebtId(null);
+    setActivePaymentDebtId(null);
+    setDebtError("");
+    setDebtModalOpen(true);
+  }
+
+
+  function closeDebtModal() {
+    setDebtModalOpen(false);
+    setDebtModalUnit(null);
+    setDebtError("");
+  }
+
+
+  function handleNewDebtChange(event) {
+    const { name, value } = event.target;
+
+    setNewDebtForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  }
+
+
+  async function handleAddDebt(event) {
+    event.preventDefault();
+
+    if (!debtModalUnit) {
+      return;
+    }
+
+    try {
+      setDebtError("");
+
+      await createPreviousPeriodDebt(token, {
+        unit_id: debtModalUnit.id,
+        amount: newDebtForm.amount,
+        period: newDebtForm.period.trim(),
+        description: newDebtForm.description.trim(),
+      });
+
+      setNewDebtForm({
+        amount: "",
+        period: "",
+        description: "",
+      });
+
+      await loadPreviousDebts();
+
+    } catch (err) {
+      setDebtError(err.message);
+    }
+  }
+
+
+  async function handleDeleteDebt(debtId) {
+    const confirmed = window.confirm(
+      "Bu borç kaydını (ve varsa üzerine yapılan ödemeleri) " +
+      "silmek istediğinize emin misiniz?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDebtError("");
+
+      await deletePreviousPeriodDebt(token, debtId);
+
+      if (expandedDebtId === debtId) {
+        setExpandedDebtId(null);
+      }
+
+      await loadPreviousDebts();
+
+    } catch (err) {
+      setDebtError(err.message);
+    }
+  }
+
+
+  async function toggleDebtPayments(debtId) {
+    if (expandedDebtId === debtId) {
+      setExpandedDebtId(null);
+      return;
+    }
+
+    try {
+      setDebtError("");
+
+      const data = await getPreviousPeriodDebtPayments(
+        token,
+        debtId
+      );
+
+      setDebtPaymentsMap((previous) => ({
+        ...previous,
+        [debtId]: data,
+      }));
+
+      setExpandedDebtId(debtId);
+
+    } catch (err) {
+      setDebtError(err.message);
+    }
+  }
+
+
+  function openPaymentForm(debtId) {
+    setActivePaymentDebtId(debtId);
+
+    setPaymentForm({
+      amount: "",
+      payment_date: now.toISOString().slice(0, 10),
+      payment_method: "",
+      description: "",
+    });
+
+    setDebtError("");
+  }
+
+
+  function handlePaymentFormChange(event) {
+    const { name, value } = event.target;
+
+    setPaymentForm((previous) => ({
+      ...previous,
+      [name]: value,
+    }));
+  }
+
+
+  async function handleSubmitDebtPayment(event, debtId) {
+    event.preventDefault();
+
+    try {
+      setDebtError("");
+
+      await createPreviousPeriodDebtPayment(
+        token,
+        debtId,
+        {
+          amount: paymentForm.amount,
+          payment_date: paymentForm.payment_date,
+          payment_method: paymentForm.payment_method,
+          description: paymentForm.description.trim(),
+        }
+      );
+
+      setActivePaymentDebtId(null);
+
+      await loadPreviousDebts();
+
+      // Ödeme geçmişi açıksa onu da tazele
+      if (expandedDebtId === debtId) {
+        const data = await getPreviousPeriodDebtPayments(
+          token,
+          debtId
+        );
+
+        setDebtPaymentsMap((previous) => ({
+          ...previous,
+          [debtId]: data,
+        }));
+      }
+
+    } catch (err) {
+      setDebtError(err.message);
+    }
+  }
+
+
+  async function handleDeleteDebtPayment(paymentId, debtId) {
+    const confirmed = window.confirm(
+      "Bu tahsilat kaydını silmek istediğinize emin misiniz?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDebtError("");
+
+      await deletePreviousPeriodDebtPayment(
+        token,
+        paymentId
+      );
+
+      await loadPreviousDebts();
+
+      const data = await getPreviousPeriodDebtPayments(
+        token,
+        debtId
+      );
+
+      setDebtPaymentsMap((previous) => ({
+        ...previous,
+        [debtId]: data,
+      }));
+
+    } catch (err) {
+      setDebtError(err.message);
     }
   }
 
@@ -280,6 +585,11 @@ function Payments() {
   function handlePrint() {
     window.print();
   }
+
+
+  const overallRemaining =
+    Number(yearlyReport?.totals?.remaining || 0) +
+    Number(previousDebtsTotals.remaining || 0);
 
 
   return (
@@ -522,14 +832,28 @@ function Payments() {
               <div className="yearly-summary-card">
 
                 <span>
-                  Toplam Kalan Borç
+                  Devreden Borç (Önceki Yıllar)
                 </span>
 
                 <strong>
                   {formatMoney(
-                    yearlyReport
-                      ?.totals
-                      ?.remaining
+                    previousDebtsTotals.remaining
+                  )}{" "}
+                  TL
+                </strong>
+
+              </div>
+
+
+              <div className="yearly-summary-card">
+
+                <span>
+                  Genel Toplam Kalan Borç
+                </span>
+
+                <strong>
+                  {formatMoney(
+                    overallRemaining
                   )}{" "}
                   TL
                 </strong>
@@ -591,6 +915,22 @@ function Payments() {
                         Borç
                       </th>
 
+                      <th>
+                        Devreden
+                        <br />
+                        Borç
+                      </th>
+
+                      <th>
+                        Genel
+                        <br />
+                        Toplam
+                      </th>
+
+                      <th className="no-print">
+                        İşlem
+                      </th>
+
                     </tr>
 
                   </thead>
@@ -604,7 +944,7 @@ function Payments() {
                       <tr>
 
                         <td
-                          colSpan="17"
+                          colSpan="20"
                           className="empty-table-cell"
                         >
                           Bu yıl için
@@ -617,7 +957,18 @@ function Payments() {
                     ) : (
 
                       yearlyReport.rows.map(
-                        (row) => (
+                        (row) => {
+
+                          const carriedRemaining =
+                            getUnitDebtRemaining(
+                              row.unit_id
+                            );
+
+                          const rowOverallRemaining =
+                            Number(row.remaining || 0) +
+                            carriedRemaining;
+
+                          return (
 
                           <tr key={row.unit_id}>
 
@@ -714,9 +1065,54 @@ function Payments() {
 
                             </td>
 
+
+                            <td
+                              className={
+                                carriedRemaining > 0
+                                  ? "money-total remaining-total"
+                                  : "money-total fully-paid-total"
+                              }
+                            >
+
+                              {formatMoney(
+                                carriedRemaining
+                              )}
+
+                            </td>
+
+
+                            <td
+                              className={
+                                rowOverallRemaining > 0
+                                  ? "money-total remaining-total"
+                                  : "money-total fully-paid-total"
+                              }
+                            >
+
+                              {formatMoney(
+                                rowOverallRemaining
+                              )}
+
+                            </td>
+
+
+                            <td className="no-print">
+
+                              <button
+                                className="table-action-button"
+                                onClick={() =>
+                                  openDebtModal(row)
+                                }
+                              >
+                                Ek Borç
+                              </button>
+
+                            </td>
+
                           </tr>
 
-                        )
+                          );
+                        }
                       )
 
                     )}
@@ -758,6 +1154,20 @@ function Payments() {
                               ?.remaining
                           )}
                         </td>
+
+                        <td>
+                          {formatMoney(
+                            previousDebtsTotals.remaining
+                          )}
+                        </td>
+
+                        <td>
+                          {formatMoney(
+                            overallRemaining
+                          )}
+                        </td>
+
+                        <td className="no-print" />
 
                       </tr>
 
@@ -1006,6 +1416,475 @@ function Payments() {
         )}
 
       </main>
+
+
+      {debtModalOpen && debtModalUnit && (
+
+        <div className="modal-overlay no-print">
+
+          <div className="modal-card debt-modal">
+
+            <div className="modal-header">
+
+              <div>
+
+                <h2>
+                  Devreden Borç —{" "}
+                  {debtModalUnit.block_name
+                    ? `${debtModalUnit.block_name} / `
+                    : ""}
+                  Daire {debtModalUnit.unit_number}
+                </h2>
+
+                <p>
+                  {debtModalUnit.owners?.length
+                    ? debtModalUnit.owners.join(", ")
+                    : "Malik eklenmedi"}
+                </p>
+
+              </div>
+
+
+              <button
+                type="button"
+                className="modal-close"
+                onClick={closeDebtModal}
+              >
+                ×
+              </button>
+
+            </div>
+
+
+            {debtError && (
+              <div className="error-message">
+                {debtError}
+              </div>
+            )}
+
+
+            {/* Mevcut borç kayıtları */}
+
+            <div className="debt-list">
+
+              {getUnitDebts(debtModalUnit.id).length === 0 ? (
+
+                <p className="debt-empty-note">
+                  Bu daire için henüz devreden borç
+                  kaydı bulunmuyor.
+                </p>
+
+              ) : (
+
+                getUnitDebts(debtModalUnit.id).map(
+                  (debt) => (
+
+                    <div
+                      key={debt.id}
+                      className="debt-item"
+                    >
+
+                      <div className="debt-item-top">
+
+                        <div>
+
+                          <strong>
+                            {formatMoney(debt.amount)} TL
+                          </strong>
+
+                          {debt.period && (
+                            <span className="debt-period">
+                              {" "}
+                              — {debt.period}
+                            </span>
+                          )}
+
+                          {debt.description && (
+                            <div className="debt-description">
+                              {debt.description}
+                            </div>
+                          )}
+
+                        </div>
+
+
+                        <span
+                          className={
+                            debt.status === "paid"
+                              ? "due-status paid"
+                              : debt.status === "partial"
+                              ? "due-status partial"
+                              : "due-status unpaid"
+                          }
+                        >
+                          {debt.status === "paid"
+                            ? "Ödendi"
+                            : debt.status === "partial"
+                            ? "Kısmi Ödendi"
+                            : "Ödenmedi"}
+                        </span>
+
+                      </div>
+
+
+                      <div className="debt-item-figures">
+
+                        <span>
+                          Ödenen:{" "}
+                          <strong>
+                            {formatMoney(debt.paid_amount)} TL
+                          </strong>
+                        </span>
+
+                        <span>
+                          Kalan:{" "}
+                          <strong>
+                            {formatMoney(debt.remaining_amount)} TL
+                          </strong>
+                        </span>
+
+                      </div>
+
+
+                      <div className="debt-item-actions">
+
+                        <button
+                          className="table-action-button"
+                          onClick={() =>
+                            toggleDebtPayments(debt.id)
+                          }
+                        >
+                          {expandedDebtId === debt.id
+                            ? "Ödemeleri Gizle"
+                            : `Ödemeleri Gör (${debt.payment_count})`}
+                        </button>
+
+
+                        {debt.remaining_amount > 0 && (
+
+                          <button
+                            className="table-action-button"
+                            onClick={() =>
+                              openPaymentForm(debt.id)
+                            }
+                          >
+                            Tahsil Et
+                          </button>
+
+                        )}
+
+
+                        <button
+                          className="table-delete-button"
+                          onClick={() =>
+                            handleDeleteDebt(debt.id)
+                          }
+                        >
+                          Sil
+                        </button>
+
+                      </div>
+
+
+                      {activePaymentDebtId === debt.id && (
+
+                        <form
+                          className="debt-payment-form"
+                          onSubmit={(event) =>
+                            handleSubmitDebtPayment(
+                              event,
+                              debt.id
+                            )
+                          }
+                        >
+
+                          <div className="form-group">
+
+                            <label>
+                              Tutar
+                            </label>
+
+                            <input
+                              type="number"
+                              name="amount"
+                              min="0.01"
+                              step="0.01"
+                              max={debt.remaining_amount}
+                              value={paymentForm.amount}
+                              onChange={
+                                handlePaymentFormChange
+                              }
+                              required
+                            />
+
+                          </div>
+
+
+                          <div className="form-group">
+
+                            <label>
+                              Tarih
+                            </label>
+
+                            <input
+                              type="date"
+                              name="payment_date"
+                              value={
+                                paymentForm.payment_date
+                              }
+                              onChange={
+                                handlePaymentFormChange
+                              }
+                              required
+                            />
+
+                          </div>
+
+
+                          <div className="form-group">
+
+                            <label>
+                              Yöntem
+                            </label>
+
+                            <select
+                              name="payment_method"
+                              value={
+                                paymentForm.payment_method
+                              }
+                              onChange={
+                                handlePaymentFormChange
+                              }
+                            >
+                              <option value="">
+                                Seçiniz
+                              </option>
+                              <option value="cash">
+                                Nakit
+                              </option>
+                              <option value="bank">
+                                Banka / Havale
+                              </option>
+                              <option value="card">
+                                Kart
+                              </option>
+                            </select>
+
+                          </div>
+
+
+                          <div className="form-group full">
+
+                            <label>
+                              Açıklama
+                            </label>
+
+                            <input
+                              name="description"
+                              value={
+                                paymentForm.description
+                              }
+                              onChange={
+                                handlePaymentFormChange
+                              }
+                              placeholder="İsteğe bağlı"
+                            />
+
+                          </div>
+
+
+                          <div className="debt-payment-form-actions">
+
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              onClick={() =>
+                                setActivePaymentDebtId(null)
+                              }
+                            >
+                              Vazgeç
+                            </button>
+
+                            <button
+                              type="submit"
+                              className="primary-button"
+                            >
+                              Tahsilatı Kaydet
+                            </button>
+
+                          </div>
+
+                        </form>
+
+                      )}
+
+
+                      {expandedDebtId === debt.id && (
+
+                        <div className="debt-payment-history">
+
+                          {!debtPaymentsMap[debt.id] ||
+                          debtPaymentsMap[debt.id].length === 0 ? (
+
+                            <p className="debt-empty-note">
+                              Bu borca ait tahsilat
+                              bulunmuyor.
+                            </p>
+
+                          ) : (
+
+                            debtPaymentsMap[debt.id].map(
+                              (payment) => (
+
+                                <div
+                                  key={payment.id}
+                                  className="debt-payment-row"
+                                >
+
+                                  <span>
+                                    {formatDate(
+                                      payment.payment_date
+                                    )}
+                                  </span>
+
+                                  <span>
+                                    <strong>
+                                      {formatMoney(
+                                        payment.amount
+                                      )}{" "}
+                                      TL
+                                    </strong>
+                                  </span>
+
+                                  <span>
+                                    {getPaymentMethod(
+                                      payment.payment_method
+                                    )}
+                                  </span>
+
+                                  <span>
+                                    {payment.description ||
+                                      "-"}
+                                  </span>
+
+                                  <button
+                                    className="table-delete-button small-button"
+                                    onClick={() =>
+                                      handleDeleteDebtPayment(
+                                        payment.id,
+                                        debt.id
+                                      )
+                                    }
+                                  >
+                                    Sil
+                                  </button>
+
+                                </div>
+
+                              )
+                            )
+
+                          )}
+
+                        </div>
+
+                      )}
+
+                    </div>
+
+                  )
+                )
+
+              )}
+
+            </div>
+
+
+            {/* Yeni borç ekleme formu */}
+
+            <form
+              className="debt-add-form"
+              onSubmit={handleAddDebt}
+            >
+
+              <h3>
+                Yeni Devreden Borç Ekle
+              </h3>
+
+              <div className="setup-row">
+
+                <div className="form-group">
+
+                  <label>
+                    Tutar *
+                  </label>
+
+                  <input
+                    type="number"
+                    name="amount"
+                    min="0.01"
+                    step="0.01"
+                    value={newDebtForm.amount}
+                    onChange={handleNewDebtChange}
+                    placeholder="0.00"
+                    required
+                  />
+
+                </div>
+
+
+                <div className="form-group">
+
+                  <label>
+                    Dönem
+                  </label>
+
+                  <input
+                    name="period"
+                    value={newDebtForm.period}
+                    onChange={handleNewDebtChange}
+                    placeholder="Örn. 2025 yılı öncesi"
+                  />
+
+                </div>
+
+              </div>
+
+
+              <div className="form-group">
+
+                <label>
+                  Açıklama
+                </label>
+
+                <input
+                  name="description"
+                  value={newDebtForm.description}
+                  onChange={handleNewDebtChange}
+                  placeholder="İsteğe bağlı"
+                />
+
+              </div>
+
+
+              <div className="modal-actions">
+
+                <button
+                  type="submit"
+                  className="primary-button"
+                >
+                  Borcu Ekle
+                </button>
+
+              </div>
+
+            </form>
+
+          </div>
+
+        </div>
+
+      )}
 
     </div>
   );
