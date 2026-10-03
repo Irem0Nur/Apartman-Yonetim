@@ -17,7 +17,7 @@ from flask_jwt_extended import (
 )
 
 from extensions import db
-from models import User
+from models import User, Apartment
 
 
 auth_bp = Blueprint(
@@ -1488,6 +1488,135 @@ def me():
 
             "message": (
                 "Kullanıcı bilgileri alınamadı."
+            ),
+
+            "error": str(e)
+
+        }), 500
+
+
+# ---------------------------------------------------------
+# EMERGENCY ACCOUNT RECOVERY
+#
+# Geçici bir yardım uç noktası: e-posta gönderim servisi
+# (Resend) belirli adreslere kod gönderemediği için, bu
+# endpoint ADMIN_RECOVERY_SECRET ortam değişkenindeki
+# gizli anahtarla korunarak, bir hesabın şifresini
+# e-postaya gerek kalmadan doğrudan değiştirmeyi sağlar.
+# Sorun çözülünce bu endpoint ve ADMIN_RECOVERY_SECRET
+# ortam değişkeni kaldırılmalıdır.
+# ---------------------------------------------------------
+
+@auth_bp.route(
+    "/emergency-recovery",
+    methods=["POST"]
+)
+def emergency_recovery():
+
+    try:
+
+        admin_secret = os.getenv(
+            "ADMIN_RECOVERY_SECRET"
+        )
+
+        if not admin_secret:
+
+            return jsonify({
+                "message": (
+                    "Bu özellik şu anda "
+                    "yapılandırılmamış."
+                )
+            }), 503
+
+        data = request.get_json() or {}
+
+        provided_secret = data.get("secret")
+
+        if (
+            not provided_secret
+            or provided_secret != admin_secret
+        ):
+
+            return jsonify({
+                "message": "Yetkisiz istek."
+            }), 401
+
+        email = (
+            data.get("email") or ""
+        ).strip().lower()
+
+        new_password = data.get("new_password")
+
+        if not email or not new_password:
+
+            return jsonify({
+                "message": (
+                    "E-posta ve yeni şifre zorunludur."
+                )
+            }), 400
+
+        if len(new_password) < 6:
+
+            return jsonify({
+                "message": (
+                    "Şifre en az 6 karakter olmalıdır."
+                )
+            }), 400
+
+        user = User.query.filter_by(
+            email=email
+        ).first()
+
+        if not user:
+
+            return jsonify({
+                "message": "Kullanıcı bulunamadı.",
+                "email_queried": email
+            }), 404
+
+        user.set_password(new_password)
+
+        user.password_reset_code = None
+
+        user.password_reset_expires_at = None
+
+        db.session.commit()
+
+        apartments = Apartment.query.filter_by(
+            manager_id=user.id
+        ).all()
+
+        return jsonify({
+
+            "message": "Şifre güncellendi.",
+
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+            },
+
+            "apartment_count": len(apartments),
+
+            "apartments": [
+                apartment.name
+                for apartment in apartments
+            ]
+
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        logger.exception(
+            "Emergency recovery error."
+        )
+
+        return jsonify({
+
+            "message": (
+                "İşlem sırasında bir hata oluştu."
             ),
 
             "error": str(e)
