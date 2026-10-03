@@ -1,3 +1,113 @@
+/* =========================================================
+   RENKLI TEMALAR
+   Sidebar'daki tema seçiciyle değiştirilir, seçim
+   localStorage'da tutulur (data-theme özniteliği ile).
+========================================================= */
+
+:root {
+  /* Varsayılan tema: Mor / İndigo */
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --primary-bg: #eef2ff;
+  --primary-shadow: rgba(79, 70, 229, 0.22);
+  --primary-shadow-light: rgba(79, 70, 229, 0.1);
+  --primary-gradient: linear-gradient(135deg, #4f46e5, #6366f1);
+
+  --sidebar-bg: #111827;
+  --sidebar-hover: #1f2937;
+}
+
+[data-theme="indigo"] {
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --primary-bg: #eef2ff;
+  --primary-shadow: rgba(79, 70, 229, 0.22);
+  --primary-shadow-light: rgba(79, 70, 229, 0.1);
+  --primary-gradient: linear-gradient(135deg, #4f46e5, #6366f1);
+}
+
+[data-theme="emerald"] {
+  --primary: #059669;
+  --primary-dark: #047857;
+  --primary-bg: #ecfdf5;
+  --primary-shadow: rgba(5, 150, 105, 0.22);
+  --primary-shadow-light: rgba(5, 150, 105, 0.1);
+  --primary-gradient: linear-gradient(135deg, #059669, #10b981);
+}
+
+[data-theme="blue"] {
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-bg: #eff6ff;
+  --primary-shadow: rgba(37, 99, 235, 0.22);
+  --primary-shadow-light: rgba(37, 99, 235, 0.1);
+  --primary-gradient: linear-gradient(135deg, #2563eb, #3b82f6);
+}
+
+[data-theme="amber"] {
+  --primary: #d97706;
+  --primary-dark: #b45309;
+  --primary-bg: #fffbeb;
+  --primary-shadow: rgba(217, 119, 6, 0.22);
+  --primary-shadow-light: rgba(217, 119, 6, 0.1);
+  --primary-gradient: linear-gradient(135deg, #d97706, #f59e0b);
+}
+
+[data-theme="rose"] {
+  --primary: #e11d48;
+  --primary-dark: #be123c;
+  --primary-bg: #fff1f2;
+  --primary-shadow: rgba(225, 29, 72, 0.22);
+  --primary-shadow-light: rgba(225, 29, 72, 0.1);
+  --primary-gradient: linear-gradient(135deg, #e11d48, #f43f5e);
+}
+
+/* Sidebar'daki aktif menü öğesine, seçilen temayı
+   hatırlatan ince bir renk şeridi ekler. */
+.menu-item.active {
+  border-left: 3px solid var(--primary);
+  padding-left: 9px;
+}
+
+/* Sidebar tema seçici */
+.theme-picker {
+  padding: 14px 12px 4px;
+  border-top: 1px solid #374151;
+}
+
+.theme-picker-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+}
+
+.theme-picker-dots {
+  display: flex;
+  gap: 10px;
+}
+
+.theme-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.theme-dot:hover {
+  transform: scale(1.12);
+}
+
+.theme-dot.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -37,7 +147,7 @@ input {
     linear-gradient(
       135deg,
       #f8fafc,
-      #eef2ff
+      var(--primary-bg)
     );
 }
 
@@ -64,7 +174,7 @@ input {
   align-items: center;
   justify-content: center;
 
-  background: #4f46e5;
+  background: var(--primary);
   color: white;
 
   font-weight: 700;
@@ -116,11 +226,11 @@ input {
 }
 
 .form-group input:focus {
-  border-color: #4f46e5;
+  border-color: var(--primary);
 
   box-shadow:
     0 0 0 3px
-    rgba(79, 70, 229, 0.1);
+    var(--primary-shadow-light);
 }
 
 .login-button {
@@ -131,7 +241,7 @@ input {
   border: none;
   border-radius: 10px;
 
-  background: #4f46e5;
+  background: var(--primary);
   color: white;
 
   font-weight: 600;
@@ -142,7 +252,7 @@ input {
 }
 
 .login-button:hover {
-  background: #4338ca;
+  background: var(--primary-dark);
 }
 
 .login-button:disabled {
@@ -175,7 +285,7 @@ input {
 }
 
 .register-link a {
-  color: #4f46e5;
+  color: var(--primary);
 
   text-decoration: none;
 
@@ -225,7 +335,7 @@ input {
 
 .sidebar {
   width: 260px;
-  background: #111827;
+  background: var(--sidebar-bg);
   color: white;
   padding: 24px 18px;
   display: flex;
@@ -245,7 +355,7 @@ input {
   width: 42px;
   height: 42px;
   border-radius: 12px;
-  background: #4f46e5;
+  background: var(--primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -276,7 +386,7 @@ input {
 
 .menu-item:hover,
 .menu-item.active {
-  background: #1f2937;
+  background: var(--sidebar-hover);
   color: white;
 }
 
@@ -413,7 +523,7 @@ input {
 .progress-value {
   width: 82%;
   height: 100%;
-  background: #4f46e5;
+  background: var(--primary);
 }
 
 .status-row {
@@ -452,7 +562,7 @@ input {
 }
 
 .quick-actions button:hover {
-  background: #eef2ff;
+  background: var(--primary-bg);
 }
 
 .activity-list,
@@ -522,7 +632,7 @@ input {
 .setup-logo {
   width: 52px;
   height: 52px;
-  background: #4f46e5;
+  background: var(--primary);
   color: white;
   border-radius: 14px;
   display: flex;
@@ -533,7 +643,7 @@ input {
 }
 
 .setup-heading > span {
-  color: #4f46e5;
+  color: var(--primary);
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
@@ -567,8 +677,8 @@ input {
 }
 
 .create-apartment-card textarea:focus {
-  border-color: #4f46e5;
-  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-shadow-light);
 }
 
 .money-input {
@@ -591,7 +701,7 @@ input {
 .setup-button {
   width: 100%;
   border: none;
-  background: #4f46e5;
+  background: var(--primary);
   color: white;
   padding: 14px;
   border-radius: 10px;
@@ -601,7 +711,7 @@ input {
 }
 
 .setup-button:hover {
-  background: #4338ca;
+  background: var(--primary-dark);
 }
 
 .setup-button:disabled {
@@ -727,7 +837,7 @@ input {
 
 .primary-button {
   border: none;
-  background: #4f46e5;
+  background: var(--primary);
   color: white;
   padding: 11px 17px;
   border-radius: 9px;
@@ -736,7 +846,7 @@ input {
 }
 
 .primary-button:hover {
-  background: #4338ca;
+  background: var(--primary-dark);
 }
 
 .secondary-button {
@@ -918,7 +1028,7 @@ input {
 
 .form-group select:focus,
 .form-group textarea:focus {
-  border-color: #6366f1;
+  border-color: var(--primary);
 }
 
 .form-group textarea {
@@ -939,8 +1049,8 @@ input {
   display: inline-flex;
   padding: 5px 10px;
   border-radius: 20px;
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--primary-bg);
+  color: var(--primary-dark);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1091,6 +1201,24 @@ input {
   font-size: 12px;
 }
 
+.due-carried-over {
+  color: #b45309;
+}
+
+.due-carried-over-hint {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #b45309;
+  white-space: nowrap;
+}
+
+.field-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
 .dues-table th,
 .dues-table td {
   white-space: nowrap;
@@ -1168,8 +1296,8 @@ input {
   border: none;
   border-radius: 8px;
   padding: 8px 12px;
-  background: #eef2ff;
-  color: #4338ca;
+  background: var(--primary-bg);
+  color: var(--primary-dark);
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
@@ -1376,9 +1504,9 @@ input {
 }
 
 .payments-tab.active {
-  background: #1f2937;
+  background: var(--sidebar-hover);
   color: white;
-  border-color: #1f2937;
+  border-color: var(--sidebar-hover);
 }
 
 
@@ -1419,7 +1547,7 @@ input {
   padding: 10px 18px;
   border: none;
   border-radius: 8px;
-  background: #1f2937;
+  background: var(--sidebar-hover);
   color: white;
   cursor: pointer;
   font-size: 14px;
@@ -1468,7 +1596,7 @@ input {
 .payment-summary-card strong,
 .yearly-summary-card strong {
   font-size: 21px;
-  color: #111827;
+  color: var(--sidebar-bg);
 }
 
 
@@ -3026,6 +3154,34 @@ input {
 
   cursor: pointer;
 }
+
+.login-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.login-options-row .show-password-row {
+  margin: 4px 0;
+}
+
+.forgot-password-link {
+  font-size: 13px;
+  font-weight: 600;
+
+  color: var(--primary);
+
+  text-decoration: none;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}
+.logout-button {
+  width: calc(100% - 24px);
+
 .logout-button {
   width: calc(100% - 24px);
 
@@ -3075,11 +3231,7 @@ input {
 
   border-radius: 22px;
 
-  background: linear-gradient(
-    135deg,
-    #4f46e5,
-    #6366f1
-  );
+  background: var(--primary-gradient);
 
   color: white;
 
@@ -3087,7 +3239,7 @@ input {
 
   box-shadow:
     0 12px 30px
-    rgba(79, 70, 229, 0.22);
+    var(--primary-shadow);
 }
 
 .verify-card h1 {
@@ -3152,13 +3304,13 @@ input {
 .verification-code-input:focus {
   outline: none;
 
-  border-color: #4f46e5;
+  border-color: var(--primary);
 
   background: #ffffff;
 
   box-shadow:
     0 0 0 4px
-    rgba(79, 70, 229, 0.12);
+    var(--primary-shadow-light);
 }
 
 .verification-code-input::placeholder {
@@ -3220,7 +3372,7 @@ input {
   border: none;
   background: transparent;
 
-  color: #4f46e5;
+  color: var(--primary);
 
   font-size: 14px;
   font-weight: 600;

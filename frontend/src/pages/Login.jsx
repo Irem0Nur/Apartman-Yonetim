@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   useNavigate,
+  useLocation,
   Link,
 } from "react-router-dom";
 
@@ -12,6 +13,7 @@ import {
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] =
     useState("");
@@ -24,6 +26,13 @@ function Login() {
 
   const [error, setError] =
     useState("");
+
+  const [message] =
+    useState(
+      location.state?.resetSuccess
+        ? "Şifreniz başarıyla güncellendi. Yeni şifrenizle giriş yapabilirsiniz."
+        : ""
+    );
 
   const [loading, setLoading] =
     useState(false);
@@ -191,23 +200,41 @@ function Login() {
           </div>
 
 
-          <label className="show-password-row">
+          <div className="login-options-row">
 
-            <input
-              type="checkbox"
-              checked={showPassword}
-              onChange={(e) =>
-                setShowPassword(
-                  e.target.checked
-                )
-              }
-            />
+            <label className="show-password-row">
 
-            <span>
-              Şifreyi göster
-            </span>
+              <input
+                type="checkbox"
+                checked={showPassword}
+                onChange={(e) =>
+                  setShowPassword(
+                    e.target.checked
+                  )
+                }
+              />
 
-          </label>
+              <span>
+                Şifreyi göster
+              </span>
+
+            </label>
+
+            <Link
+              to="/sifremi-unuttum"
+              className="forgot-password-link"
+            >
+              Şifremi unuttum
+            </Link>
+
+          </div>
+
+
+          {message && (
+            <div className="success-message">
+              {message}
+            </div>
+          )}
 
 
           {error && (

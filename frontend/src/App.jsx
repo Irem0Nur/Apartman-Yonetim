@@ -7,6 +7,8 @@ import {
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import VerifyEmail from "./pages/VerifyEmail";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 import Dashboard from "./pages/Dashboard";
 import CreateApartment from "./pages/CreateApartment";
@@ -48,6 +50,16 @@ function App() {
         <Route
           path="/verify-email"
           element={<VerifyEmail />}
+        />
+
+        <Route
+          path="/sifremi-unuttum"
+          element={<ForgotPassword />}
+        />
+
+        <Route
+          path="/sifre-sifirla"
+          element={<ResetPassword />}
         />
 
 

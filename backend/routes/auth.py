@@ -180,6 +180,130 @@ def send_verification_email(
 
 
 # ---------------------------------------------------------
+# SEND PASSWORD RESET EMAIL
+# ---------------------------------------------------------
+
+def send_password_reset_email(
+    email,
+    reset_code
+):
+    """
+    Resend API üzerinden şifre sıfırlama e-postası gönderir.
+    """
+
+    if not RESEND_API_KEY:
+        raise RuntimeError(
+            "RESEND_API_KEY environment variable tanımlı değil."
+        )
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset="UTF-8">
+        <title>Şifre Sıfırlama</title>
+    </head>
+
+    <body
+        style="
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 30px;
+        "
+    >
+
+        <div
+            style="
+                max-width: 500px;
+                margin: auto;
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+            "
+        >
+
+            <h2 style="text-align: center;">
+                Apartman Yönetim
+            </h2>
+
+            <p>
+                Merhaba,
+            </p>
+
+            <p>
+                Şifrenizi sıfırlamak için aşağıdaki
+                kodu kullanabilirsiniz:
+            </p>
+
+            <div
+                style="
+                    text-align: center;
+                    margin: 30px 0;
+                "
+            >
+
+                <span
+                    style="
+                        display: inline-block;
+                        background-color: #eeeeee;
+                        padding: 15px 30px;
+                        font-size: 30px;
+                        font-weight: bold;
+                        letter-spacing: 8px;
+                        border-radius: 8px;
+                    "
+                >
+                    {reset_code}
+                </span>
+
+            </div>
+
+            <p>
+                Bu kodun geçerlilik süresi:
+                <strong>10 dakika</strong>.
+            </p>
+
+            <p>
+                Eğer bu işlemi siz talep etmediyseniz
+                bu e-postayı dikkate almayabilirsiniz,
+                şifreniz değişmeyecektir.
+            </p>
+
+            <hr>
+
+            <p
+                style="
+                    font-size: 12px;
+                    color: #777;
+                "
+            >
+                Apartman Yönetim Sistemi
+            </p>
+
+        </div>
+
+    </body>
+    </html>
+    """
+
+    params = {
+        "from": RESEND_FROM_EMAIL,
+        "to": [email],
+        "subject": "Apartman Yönetim - Şifre Sıfırlama Kodunuz",
+        "html": html_content,
+    }
+
+    response = resend.Emails.send(params)
+
+    logger.info(
+        "Password reset email sent successfully to %s",
+        email
+    )
+
+    return response
+
+
+# ---------------------------------------------------------
 # REGISTER
 # ---------------------------------------------------------
 
@@ -693,6 +817,249 @@ def login():
         return jsonify({
 
             "message": "Giriş sırasında bir hata oluştu.",
+
+            "error": str(e)
+
+        }), 500
+
+
+# ---------------------------------------------------------
+# FORGOT PASSWORD
+# ---------------------------------------------------------
+
+@auth_bp.route(
+    "/forgot-password",
+    methods=["POST"]
+)
+def forgot_password():
+
+    try:
+
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "message": "Geçersiz istek."
+            }), 400
+
+        email = data.get("email")
+
+        if not email:
+            return jsonify({
+                "message": "E-posta adresi zorunludur."
+            }), 400
+
+        email = email.strip().lower()
+
+        user = User.query.filter_by(
+            email=email
+        ).first()
+
+        if not user:
+
+            return jsonify({
+                "message": "Kullanıcı bulunamadı."
+            }), 404
+
+        # -------------------------------------------------
+        # NEW CODE
+        # -------------------------------------------------
+
+        reset_code = generate_verification_code()
+
+        user.password_reset_code = reset_code
+
+        user.password_reset_expires_at = (
+            datetime.now(timezone.utc)
+            + timedelta(minutes=10)
+        )
+
+        db.session.commit()
+
+        # -------------------------------------------------
+        # SEND EMAIL
+        # -------------------------------------------------
+
+        try:
+
+            send_password_reset_email(
+                email,
+                reset_code
+            )
+
+        except Exception as mail_error:
+
+            logger.exception(
+                "Password reset email could not be sent."
+            )
+
+            return jsonify({
+
+                "message": (
+                    "Şifre sıfırlama kodu oluşturuldu "
+                    "ancak e-posta gönderilemedi."
+                ),
+
+                "error": str(mail_error)
+
+            }), 503
+
+        return jsonify({
+
+            "message": (
+                "Şifre sıfırlama kodu "
+                "e-posta adresinize gönderildi."
+            ),
+
+            "email": email
+
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        logger.exception(
+            "Forgot password error."
+        )
+
+        return jsonify({
+
+            "message": (
+                "Şifre sıfırlama kodu gönderilirken "
+                "bir hata oluştu."
+            ),
+
+            "error": str(e)
+
+        }), 500
+
+
+# ---------------------------------------------------------
+# RESET PASSWORD
+# ---------------------------------------------------------
+
+@auth_bp.route(
+    "/reset-password",
+    methods=["POST"]
+)
+def reset_password():
+
+    try:
+
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "message": "Geçersiz istek."
+            }), 400
+
+        email = data.get("email")
+        code = data.get("code")
+        new_password = data.get("new_password")
+
+        if not email or not code or not new_password:
+            return jsonify({
+                "message": (
+                    "E-posta, kod ve yeni şifre zorunludur."
+                )
+            }), 400
+
+        email = email.strip().lower()
+        code = str(code).strip()
+
+        if len(new_password) < 6:
+            return jsonify({
+                "message": (
+                    "Şifre en az 6 karakter olmalıdır."
+                )
+            }), 400
+
+        user = User.query.filter_by(
+            email=email
+        ).first()
+
+        if not user:
+            return jsonify({
+                "message": "Kullanıcı bulunamadı."
+            }), 404
+
+        # -------------------------------------------------
+        # CODE CHECK
+        # -------------------------------------------------
+
+        if (
+            not user.password_reset_code
+            or user.password_reset_code != code
+        ):
+
+            return jsonify({
+                "message": "Şifre sıfırlama kodu hatalı."
+            }), 400
+
+        # -------------------------------------------------
+        # EXPIRATION CHECK
+        # -------------------------------------------------
+
+        if not user.password_reset_expires_at:
+
+            return jsonify({
+                "message": "Şifre sıfırlama kodu geçersiz."
+            }), 400
+
+        expires_at = user.password_reset_expires_at
+
+        # SQLite/PostgreSQL timezone farklarını
+        # güvenli şekilde ele al.
+
+        if expires_at.tzinfo is None:
+
+            expires_at = expires_at.replace(
+                tzinfo=timezone.utc
+            )
+
+        if datetime.now(timezone.utc) > expires_at:
+
+            return jsonify({
+                "message": (
+                    "Şifre sıfırlama kodunun süresi dolmuş."
+                )
+            }), 400
+
+        # -------------------------------------------------
+        # RESET PASSWORD
+        # -------------------------------------------------
+
+        user.set_password(new_password)
+
+        user.password_reset_code = None
+
+        user.password_reset_expires_at = None
+
+        db.session.commit()
+
+        return jsonify({
+
+            "message": (
+                "Şifreniz başarıyla güncellendi. "
+                "Yeni şifrenizle giriş yapabilirsiniz."
+            )
+
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        logger.exception(
+            "Reset password error."
+        )
+
+        return jsonify({
+
+            "message": (
+                "Şifre sıfırlanırken bir hata oluştu."
+            ),
 
             "error": str(e)
 

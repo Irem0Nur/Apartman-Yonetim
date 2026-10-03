@@ -199,6 +199,76 @@ export async function resendVerification(
 }
 
 
+export async function forgotPassword(
+  email
+) {
+  const response = await fetch(
+    `${API_URL}/auth/forgot-password`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+
+      body: JSON.stringify({
+        email,
+      }),
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Şifre sıfırlama kodu gönderilemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function resetPassword(
+  email,
+  code,
+  newPassword
+) {
+  const response = await fetch(
+    `${API_URL}/auth/reset-password`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+
+      body: JSON.stringify({
+        email,
+        code,
+        new_password: newPassword,
+      }),
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Şifre sıfırlanamadı"
+    );
+  }
+
+  return data;
+}
+
+
 // =========================================================
 // APARTMENTS
 // =========================================================
