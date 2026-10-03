@@ -12,6 +12,10 @@ import Sidebar from "../components/Sidebar";
 import {
   getApartments,
   updateApartment,
+  getCurrentUser,
+  updateName,
+  changeEmail,
+  changePassword,
 } from "../services/api";
 
 
@@ -77,6 +81,59 @@ function ApartmentInfo() {
     unit_count: 0,
     default_due_amount: 0,
   });
+
+
+  // -------------------------------------------------------
+  // HESAP BİLGİLERİ (ad soyad / e-posta / şifre)
+  // -------------------------------------------------------
+
+  const [user, setUser] =
+    useState(null);
+
+  const [nameForm, setNameForm] =
+    useState("");
+
+  const [nameSaving, setNameSaving] =
+    useState(false);
+
+  const [nameError, setNameError] =
+    useState("");
+
+  const [nameMessage, setNameMessage] =
+    useState("");
+
+
+  const [emailForm, setEmailForm] =
+    useState({
+      new_email: "",
+      current_password: "",
+    });
+
+  const [emailSaving, setEmailSaving] =
+    useState(false);
+
+  const [emailError, setEmailError] =
+    useState("");
+
+  const [emailMessage, setEmailMessage] =
+    useState("");
+
+
+  const [passwordForm, setPasswordForm] =
+    useState({
+      current_password: "",
+      new_password: "",
+      confirm_password: "",
+    });
+
+  const [passwordSaving, setPasswordSaving] =
+    useState(false);
+
+  const [passwordError, setPasswordError] =
+    useState("");
+
+  const [passwordMessage, setPasswordMessage] =
+    useState("");
 
 
   useEffect(() => {
@@ -156,6 +213,225 @@ function ApartmentInfo() {
     navigate,
     token,
   ]);
+
+
+  useEffect(() => {
+    async function loadUser() {
+      if (!token) {
+        return;
+      }
+
+      try {
+        const userData =
+          await getCurrentUser(
+            token
+          );
+
+        setUser(userData);
+
+        setNameForm(
+          userData.name || ""
+        );
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadUser();
+
+  }, [token]);
+
+
+  async function handleNameSave(
+    event
+  ) {
+    event.preventDefault();
+
+    setNameError("");
+    setNameMessage("");
+
+    if (!nameForm.trim()) {
+      setNameError(
+        "Ad soyad zorunludur."
+      );
+      return;
+    }
+
+    try {
+      setNameSaving(true);
+
+      const result =
+        await updateName(
+          token,
+          nameForm.trim()
+        );
+
+      setUser(result.user);
+
+      setNameForm(
+        result.user.name || ""
+      );
+
+      setNameMessage(
+        "Ad soyad güncellendi."
+      );
+
+    } catch (err) {
+      setNameError(err.message);
+
+    } finally {
+      setNameSaving(false);
+    }
+  }
+
+
+  function handleEmailFormChange(
+    event
+  ) {
+    const { name, value } =
+      event.target;
+
+    setEmailForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+
+  async function handleEmailSave(
+    event
+  ) {
+    event.preventDefault();
+
+    setEmailError("");
+    setEmailMessage("");
+
+    const newEmail =
+      emailForm.new_email
+        .trim()
+        .toLowerCase();
+
+    if (!newEmail) {
+      setEmailError(
+        "Yeni e-posta adresi zorunludur."
+      );
+      return;
+    }
+
+    if (!emailForm.current_password) {
+      setEmailError(
+        "Mevcut şifrenizi girin."
+      );
+      return;
+    }
+
+    try {
+      setEmailSaving(true);
+
+      const result =
+        await changeEmail(
+          token,
+          newEmail,
+          emailForm.current_password
+        );
+
+      setUser(result.user);
+
+      setEmailForm({
+        new_email: "",
+        current_password: "",
+      });
+
+      setEmailMessage(
+        "E-posta adresi güncellendi. "+
+        "Bir sonraki girişte yeni " +
+        "e-posta adresinizi kullanın."
+      );
+
+    } catch (err) {
+      setEmailError(err.message);
+
+    } finally {
+      setEmailSaving(false);
+    }
+  }
+
+
+  function handlePasswordFormChange(
+    event
+  ) {
+    const { name, value } =
+      event.target;
+
+    setPasswordForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+
+  async function handlePasswordSave(
+    event
+  ) {
+    event.preventDefault();
+
+    setPasswordError("");
+    setPasswordMessage("");
+
+    if (
+      !passwordForm.current_password ||
+      !passwordForm.new_password
+    ) {
+      setPasswordError(
+        "Mevcut ve yeni şifre zorunludur."
+      );
+      return;
+    }
+
+    if (passwordForm.new_password.length < 6) {
+      setPasswordError(
+        "Yeni şifre en az 6 karakter olmalıdır."
+      );
+      return;
+    }
+
+    if (
+      passwordForm.new_password !==
+      passwordForm.confirm_password
+    ) {
+      setPasswordError(
+        "Yeni şifreler birbiriyle uyuşmuyor."
+      );
+      return;
+    }
+
+    try {
+      setPasswordSaving(true);
+
+      await changePassword(
+        token,
+        passwordForm.current_password,
+        passwordForm.new_password
+      );
+
+      setPasswordForm({
+        current_password: "",
+        new_password: "",
+        confirm_password: "",
+      });
+
+      setPasswordMessage(
+        "Şifreniz güncellendi."
+      );
+
+    } catch (err) {
+      setPasswordError(err.message);
+
+    } finally {
+      setPasswordSaving(false);
+    }
+  }
 
 
   function handleEdit() {
@@ -707,6 +983,255 @@ function ApartmentInfo() {
           </section>
 
         )}
+
+
+        <section className="panel account-settings-panel">
+
+          <h2>
+            Hesap Bilgileri
+          </h2>
+
+          <p className="subtitle">
+            Kendi yönetici hesabınıza
+            ait ad soyad, e-posta ve
+            şifre bilgilerinizi buradan
+            güncelleyebilirsiniz.
+          </p>
+
+
+          <div className="account-settings-grid">
+
+            <form
+              className="account-settings-form"
+              onSubmit={handleNameSave}
+            >
+
+              <h3>
+                Ad Soyad
+              </h3>
+
+              <div className="form-group">
+
+                <input
+                  type="text"
+                  value={nameForm}
+                  onChange={(e) =>
+                    setNameForm(
+                      e.target.value
+                    )
+                  }
+                  required
+                />
+
+              </div>
+
+              {nameError && (
+                <div className="error-message">
+                  {nameError}
+                </div>
+              )}
+
+              {nameMessage && (
+                <div className="success-message">
+                  {nameMessage}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={nameSaving}
+              >
+                {nameSaving
+                  ? "Kaydediliyor..."
+                  : "Ad Soyadı Güncelle"}
+              </button>
+
+            </form>
+
+
+            <form
+              className="account-settings-form"
+              onSubmit={handleEmailSave}
+            >
+
+              <h3>
+                E-posta Adresi
+              </h3>
+
+              <p className="field-hint">
+                Şu anki e-posta:
+                {" "}
+                <strong>
+                  {user?.email || "-"}
+                </strong>
+              </p>
+
+              <div className="form-group">
+
+                <label>
+                  Yeni E-posta
+                </label>
+
+                <input
+                  type="email"
+                  name="new_email"
+                  value={
+                    emailForm.new_email
+                  }
+                  onChange={
+                    handleEmailFormChange
+                  }
+                  required
+                />
+
+              </div>
+
+              <div className="form-group">
+
+                <label>
+                  Mevcut Şifre
+                </label>
+
+                <input
+                  type="password"
+                  name="current_password"
+                  value={
+                    emailForm.current_password
+                  }
+                  onChange={
+                    handleEmailFormChange
+                  }
+                  autoComplete="current-password"
+                  required
+                />
+
+              </div>
+
+              {emailError && (
+                <div className="error-message">
+                  {emailError}
+                </div>
+              )}
+
+              {emailMessage && (
+                <div className="success-message">
+                  {emailMessage}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={emailSaving}
+              >
+                {emailSaving
+                  ? "Kaydediliyor..."
+                  : "E-postayı Güncelle"}
+              </button>
+
+            </form>
+
+
+            <form
+              className="account-settings-form"
+              onSubmit={handlePasswordSave}
+            >
+
+              <h3>
+                Şifre Değiştir
+              </h3>
+
+              <div className="form-group">
+
+                <label>
+                  Mevcut Şifre
+                </label>
+
+                <input
+                  type="password"
+                  name="current_password"
+                  value={
+                    passwordForm.current_password
+                  }
+                  onChange={
+                    handlePasswordFormChange
+                  }
+                  autoComplete="current-password"
+                  required
+                />
+
+              </div>
+
+              <div className="form-group">
+
+                <label>
+                  Yeni Şifre
+                </label>
+
+                <input
+                  type="password"
+                  name="new_password"
+                  value={
+                    passwordForm.new_password
+                  }
+                  onChange={
+                    handlePasswordFormChange
+                  }
+                  autoComplete="new-password"
+                  required
+                />
+
+              </div>
+
+              <div className="form-group">
+
+                <label>
+                  Yeni Şifre (Tekrar)
+                </label>
+
+                <input
+                  type="password"
+                  name="confirm_password"
+                  value={
+                    passwordForm.confirm_password
+                  }
+                  onChange={
+                    handlePasswordFormChange
+                  }
+                  autoComplete="new-password"
+                  required
+                />
+
+              </div>
+
+              {passwordError && (
+                <div className="error-message">
+                  {passwordError}
+                </div>
+              )}
+
+              {passwordMessage && (
+                <div className="success-message">
+                  {passwordMessage}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="primary-button"
+                disabled={passwordSaving}
+              >
+                {passwordSaving
+                  ? "Kaydediliyor..."
+                  : "Şifreyi Güncelle"}
+              </button>
+
+            </form>
+
+          </div>
+
+        </section>
 
       </main>
 

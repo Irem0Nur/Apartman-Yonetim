@@ -1067,6 +1067,270 @@ def reset_password():
 
 
 # ---------------------------------------------------------
+# UPDATE NAME
+# ---------------------------------------------------------
+
+@auth_bp.route(
+    "/update-name",
+    methods=["PUT"]
+)
+@jwt_required()
+def update_name():
+
+    try:
+
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "message": "Geçersiz istek."
+            }), 400
+
+        name = data.get("name")
+
+        if not name or not name.strip():
+            return jsonify({
+                "message": "Ad soyad zorunludur."
+            }), 400
+
+        user_id = get_jwt_identity()
+
+        user = User.query.get(
+            int(user_id)
+        )
+
+        if not user:
+            return jsonify({
+                "message": "Kullanıcı bulunamadı."
+            }), 404
+
+        user.name = name.strip()
+
+        db.session.commit()
+
+        return jsonify({
+
+            "message": "Ad soyad başarıyla güncellendi.",
+
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "is_email_verified": user.is_email_verified,
+            }
+
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        logger.exception(
+            "Update name error."
+        )
+
+        return jsonify({
+
+            "message": (
+                "Ad soyad güncellenirken bir hata oluştu."
+            ),
+
+            "error": str(e)
+
+        }), 500
+
+
+# ---------------------------------------------------------
+# CHANGE EMAIL
+# ---------------------------------------------------------
+
+@auth_bp.route(
+    "/change-email",
+    methods=["PUT"]
+)
+@jwt_required()
+def change_email():
+
+    try:
+
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "message": "Geçersiz istek."
+            }), 400
+
+        new_email = data.get("new_email")
+        current_password = data.get("current_password")
+
+        if not new_email or not current_password:
+            return jsonify({
+                "message": (
+                    "Yeni e-posta ve mevcut şifre zorunludur."
+                )
+            }), 400
+
+        new_email = new_email.strip().lower()
+
+        user_id = get_jwt_identity()
+
+        user = User.query.get(
+            int(user_id)
+        )
+
+        if not user:
+            return jsonify({
+                "message": "Kullanıcı bulunamadı."
+            }), 404
+
+        if not user.check_password(current_password):
+            return jsonify({
+                "message": "Mevcut şifre hatalı."
+            }), 401
+
+        if new_email == user.email:
+            return jsonify({
+                "message": (
+                    "Yeni e-posta mevcut e-posta "
+                    "ile aynı."
+                )
+            }), 400
+
+        existing = User.query.filter_by(
+            email=new_email
+        ).first()
+
+        if existing:
+            return jsonify({
+                "message": (
+                    "Bu e-posta adresi başka bir "
+                    "hesapta kullanılıyor."
+                )
+            }), 409
+
+        user.email = new_email
+
+        db.session.commit()
+
+        return jsonify({
+
+            "message": (
+                "E-posta adresi başarıyla güncellendi."
+            ),
+
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "is_email_verified": user.is_email_verified,
+            }
+
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        logger.exception(
+            "Change email error."
+        )
+
+        return jsonify({
+
+            "message": (
+                "E-posta güncellenirken bir hata oluştu."
+            ),
+
+            "error": str(e)
+
+        }), 500
+
+
+# ---------------------------------------------------------
+# CHANGE PASSWORD
+# ---------------------------------------------------------
+
+@auth_bp.route(
+    "/change-password",
+    methods=["PUT"]
+)
+@jwt_required()
+def change_password():
+
+    try:
+
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                "message": "Geçersiz istek."
+            }), 400
+
+        current_password = data.get("current_password")
+        new_password = data.get("new_password")
+
+        if not current_password or not new_password:
+            return jsonify({
+                "message": (
+                    "Mevcut şifre ve yeni şifre zorunludur."
+                )
+            }), 400
+
+        if len(new_password) < 6:
+            return jsonify({
+                "message": (
+                    "Yeni şifre en az 6 karakter olmalıdır."
+                )
+            }), 400
+
+        user_id = get_jwt_identity()
+
+        user = User.query.get(
+            int(user_id)
+        )
+
+        if not user:
+            return jsonify({
+                "message": "Kullanıcı bulunamadı."
+            }), 404
+
+        if not user.check_password(current_password):
+            return jsonify({
+                "message": "Mevcut şifre hatalı."
+            }), 401
+
+        user.set_password(new_password)
+
+        db.session.commit()
+
+        return jsonify({
+
+            "message": (
+                "Şifreniz başarıyla güncellendi."
+            )
+
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        logger.exception(
+            "Change password error."
+        )
+
+        return jsonify({
+
+            "message": (
+                "Şifre güncellenirken bir hata oluştu."
+            ),
+
+            "error": str(e)
+
+        }), 500
+
+
+# ---------------------------------------------------------
 # CURRENT USER
 # ---------------------------------------------------------
 

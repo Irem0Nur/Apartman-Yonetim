@@ -269,6 +269,121 @@ export async function resetPassword(
 }
 
 
+export async function updateName(
+  token,
+  name
+) {
+  const response = await fetch(
+    `${API_URL}/auth/update-name`,
+    {
+      method: "PUT",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        Authorization:
+          `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        name,
+      }),
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Ad soyad güncellenemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function changeEmail(
+  token,
+  newEmail,
+  currentPassword
+) {
+  const response = await fetch(
+    `${API_URL}/auth/change-email`,
+    {
+      method: "PUT",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        Authorization:
+          `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        new_email: newEmail,
+        current_password: currentPassword,
+      }),
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "E-posta güncellenemedi"
+    );
+  }
+
+  return data;
+}
+
+
+export async function changePassword(
+  token,
+  currentPassword,
+  newPassword
+) {
+  const response = await fetch(
+    `${API_URL}/auth/change-password`,
+    {
+      method: "PUT",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        Authorization:
+          `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        current_password: currentPassword,
+        new_password: newPassword,
+      }),
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Şifre güncellenemedi"
+    );
+  }
+
+  return data;
+}
+
+
 // =========================================================
 // APARTMENTS
 // =========================================================
