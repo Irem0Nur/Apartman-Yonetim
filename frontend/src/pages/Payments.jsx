@@ -592,6 +592,35 @@ function Payments() {
     Number(previousDebtsTotals.remaining || 0);
 
 
+  // Her ay için, tüm dairelerin o ay tahsil edilen
+  // tutarlarının toplamı (tablo altındaki özet satır için).
+  const monthlyCollectedTotals =
+    useMemo(() => {
+
+      const totals = {};
+
+      MONTHS.forEach((item) => {
+        totals[item.value] = 0;
+      });
+
+      (yearlyReport?.rows || []).forEach((row) => {
+
+        MONTHS.forEach((item) => {
+
+          const paid =
+            row.monthly_payments?.[
+              String(item.value)
+            ] || 0;
+
+          totals[item.value] += Number(paid);
+        });
+      });
+
+      return totals;
+
+    }, [yearlyReport]);
+
+
   return (
     <div className="app-layout">
 
@@ -1127,9 +1156,26 @@ function Payments() {
 
                       <tr>
 
-                        <td colSpan="14">
+                        <td colSpan="2">
                           GENEL TOPLAM
                         </td>
+
+                        {MONTHS.map(
+                          (item) => (
+
+                            <td
+                              key={item.value}
+                              className="money-total paid-total"
+                            >
+                              {formatTableMoney(
+                                monthlyCollectedTotals[
+                                  item.value
+                                ]
+                              )}
+                            </td>
+
+                          )
+                        )}
 
                         <td>
                           {formatMoney(
