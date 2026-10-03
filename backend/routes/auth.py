@@ -1714,3 +1714,116 @@ def emergency_diagnostics():
             "error": str(e)
 
         }), 500
+
+
+# ---------------------------------------------------------
+# EMERGENCY DELETE EMPTY USER
+#
+# ADMIN_RECOVERY_SECRET ile korunan, sadece HİÇ apartmanı
+# olmayan (yanlışlıkla oluşmuş, boş) hesapları silmeye
+# izin veren bir güvenlik önlemi. Apartmanı olan bir
+# hesabı asla silmez. Sorun çözülünce kaldırılmalı.
+# ---------------------------------------------------------
+
+@auth_bp.route(
+    "/emergency-delete-empty-user",
+    methods=["POST"]
+)
+def emergency_delete_empty_user():
+
+    try:
+
+        admin_secret = os.getenv(
+            "ADMIN_RECOVERY_SECRET"
+        )
+
+        if not admin_secret:
+
+            return jsonify({
+                "message": (
+                    "Bu özellik şu anda "
+                    "yapılandırılmamış."
+                )
+            }), 503
+
+        data = request.get_json() or {}
+
+        provided_secret = data.get("secret")
+
+        if (
+            not provided_secret
+            or provided_secret != admin_secret
+        ):
+
+            return jsonify({
+                "message": "Yetkisiz istek."
+            }), 401
+
+        email = (
+            data.get("email") or ""
+        ).strip().lower()
+
+        if not email:
+
+            return jsonify({
+                "message": "E-posta zorunludur."
+            }), 400
+
+        user = User.query.filter_by(
+            email=email
+        ).first()
+
+        if not user:
+
+            return jsonify({
+                "message": "Kullanıcı bulunamadı.",
+                "email_queried": email
+            }), 404
+
+        apartments = Apartment.query.filter_by(
+            manager_id=user.id
+        ).all()
+
+        if len(apartments) > 0:
+
+            return jsonify({
+                "message": (
+                    "Bu hesapta apartman verisi var, "
+                    "güvenlik amacıyla silinmedi."
+                ),
+                "apartment_count": len(apartments),
+                "apartments": [
+                    apartment.name
+                    for apartment in apartments
+                ],
+            }), 400
+
+        deleted_id = user.id
+
+        db.session.delete(user)
+
+        db.session.commit()
+
+        return jsonify({
+            "message": "Boş hesap silindi.",
+            "deleted_user_id": deleted_id,
+            "email": email,
+        }), 200
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        logger.exception(
+            "Emergency delete empty user error."
+        )
+
+        return jsonify({
+
+            "message": (
+                "İşlem sırasında bir hata oluştu."
+            ),
+
+            "error": str(e)
+
+        }), 500
