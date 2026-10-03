@@ -797,7 +797,7 @@ function LedgerTable({
         <h2>{title}</h2>
 
         <button
-          className="primary-button small kd-no-print"
+          className="primary-button small-button kd-no-print"
           onClick={onAdd}
         >
           + {type === "income" ? "Gelir" : "Gider"} Ekle

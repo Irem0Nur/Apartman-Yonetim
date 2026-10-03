@@ -3239,9 +3239,6 @@ input {
 .logout-button {
   width: calc(100% - 24px);
 
-.logout-button {
-  width: calc(100% - 24px);
-
   display: flex;
   align-items: center;
   gap: 10px;
