@@ -3,7 +3,7 @@ import logging
 import random
 from datetime import datetime, timedelta, timezone
 
-from smtp2go.core import Smtp2goClient
+import resend
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
@@ -31,12 +31,18 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------
-# SMTP2GO CONFIGURATION
+# RESEND CONFIGURATION
 # ---------------------------------------------------------
 
-SMTP2GO_API_KEY = os.getenv("SMTP2GO_API_KEY")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
-SMTP2GO_SENDER_EMAIL = os.getenv("SMTP2GO_SENDER_EMAIL")
+RESEND_FROM_EMAIL = os.getenv(
+    "RESEND_FROM_EMAIL",
+    "onboarding@resend.dev"
+)
+
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
 
 
 # ---------------------------------------------------------
@@ -51,53 +57,6 @@ def generate_verification_code():
 
 
 # ---------------------------------------------------------
-# SEND EMAIL (SMTP2GO)
-# ---------------------------------------------------------
-
-def _send_email(
-    to_email,
-    subject,
-    html_content
-):
-    """
-    SMTP2GO API üzerinden e-posta gönderir. Tek bir
-    doğrulanmış gönderici adresi (SMTP2GO_SENDER_EMAIL)
-    kullanır, istenilen herhangi bir alıcıya gönderim
-    yapabilir (domain doğrulaması gerekmez).
-    """
-
-    if not SMTP2GO_API_KEY or not SMTP2GO_SENDER_EMAIL:
-        raise RuntimeError(
-            "SMTP2GO_API_KEY / SMTP2GO_SENDER_EMAIL "
-            "environment variable(lar)ı tanımlı değil."
-        )
-
-    client = Smtp2goClient(
-        api_key=SMTP2GO_API_KEY
-    )
-
-    response = client.send(
-        sender=SMTP2GO_SENDER_EMAIL,
-        recipients=[to_email],
-        subject=subject,
-        html=html_content,
-    )
-
-    if not response.success:
-        raise RuntimeError(
-            f"SMTP2GO e-posta gönderimi başarısız: "
-            f"{response.errors}"
-        )
-
-    logger.info(
-        "Email sent successfully via SMTP2GO to %s",
-        to_email
-    )
-
-    return response
-
-
-# ---------------------------------------------------------
 # SEND VERIFICATION EMAIL
 # ---------------------------------------------------------
 
@@ -106,8 +65,13 @@ def send_verification_email(
     verification_code
 ):
     """
-    SMTP2GO API üzerinden doğrulama e-postası gönderir.
+    Resend API üzerinden doğrulama e-postası gönderir.
     """
+
+    if not RESEND_API_KEY:
+        raise RuntimeError(
+            "RESEND_API_KEY environment variable tanımlı değil."
+        )
 
     html_content = f"""
     <!DOCTYPE html>
@@ -198,11 +162,21 @@ def send_verification_email(
     </html>
     """
 
-    return _send_email(
-        email,
-        "Apartman Yönetim - E-posta Doğrulama Kodunuz",
-        html_content,
+    params = {
+        "from": RESEND_FROM_EMAIL,
+        "to": [email],
+        "subject": "Apartman Yönetim - E-posta Doğrulama Kodunuz",
+        "html": html_content,
+    }
+
+    response = resend.Emails.send(params)
+
+    logger.info(
+        "Verification email sent successfully to %s",
+        email
     )
+
+    return response
 
 
 # ---------------------------------------------------------
@@ -214,8 +188,13 @@ def send_password_reset_email(
     reset_code
 ):
     """
-    SMTP2GO API üzerinden şifre sıfırlama e-postası gönderir.
+    Resend API üzerinden şifre sıfırlama e-postası gönderir.
     """
+
+    if not RESEND_API_KEY:
+        raise RuntimeError(
+            "RESEND_API_KEY environment variable tanımlı değil."
+        )
 
     html_content = f"""
     <!DOCTYPE html>
@@ -307,11 +286,21 @@ def send_password_reset_email(
     </html>
     """
 
-    return _send_email(
-        email,
-        "Apartman Yönetim - Şifre Sıfırlama Kodunuz",
-        html_content,
+    params = {
+        "from": RESEND_FROM_EMAIL,
+        "to": [email],
+        "subject": "Apartman Yönetim - Şifre Sıfırlama Kodunuz",
+        "html": html_content,
+    }
+
+    response = resend.Emails.send(params)
+
+    logger.info(
+        "Password reset email sent successfully to %s",
+        email
     )
+
+    return response
 
 
 # ---------------------------------------------------------
