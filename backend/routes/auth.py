@@ -345,95 +345,60 @@ def register():
         # -------------------------------------------------
         # EXISTING USER
         # -------------------------------------------------
+        #
+        # E-posta doğrulama adımı kaldırıldı: hesaplar
+        # oluşturulduğu anda doğrulanmış sayılıyor ve
+        # kullanıcı doğrudan giriş yapabiliyor (kod
+        # bekleyen bir e-posta sistemine ihtiyaç yok).
 
         user = User.query.filter_by(
             email=email
         ).first()
 
-        verification_code = generate_verification_code()
-
-        verification_expires_at = (
-            datetime.now(timezone.utc)
-            + timedelta(minutes=10)
-        )
-
         if user:
 
-            # Daha önce doğrulanmış kullanıcı
-            if user.is_email_verified:
-                return jsonify({
-                    "message": "Bu e-posta adresi zaten kayıtlı."
-                }), 409
+            # E-posta zaten kayıtlı bir hesaba ait
+            return jsonify({
+                "message": "Bu e-posta adresi zaten kayıtlı."
+            }), 409
 
-            # Kullanıcı var fakat doğrulanmamış
-            user.email_verification_code = verification_code
-            user.email_verification_expires_at = (
-                verification_expires_at
-            )
+        # -------------------------------------------------
+        # NEW USER
+        # -------------------------------------------------
 
-            user.set_password(password)
+        user = User(
+            name=name,
+            email=email,
+            password_hash="",
+            is_email_verified=True,
+        )
 
-        else:
+        user.set_password(password)
 
-            # -------------------------------------------------
-            # NEW USER
-            # -------------------------------------------------
-
-            user = User(
-                name=name,
-                email=email,
-                password_hash="",
-                is_email_verified=False,
-                email_verification_code=verification_code,
-                email_verification_expires_at=(
-                    verification_expires_at
-                ),
-            )
-
-            user.set_password(password)
-
-            db.session.add(user)
-
+        db.session.add(user)
         db.session.commit()
 
         # -------------------------------------------------
-        # SEND EMAIL
+        # SUCCESS — doğrudan giriş yaptır
         # -------------------------------------------------
 
-        try:
-
-            send_verification_email(
-                email,
-                verification_code
-            )
-
-        except Exception as mail_error:
-
-            logger.exception(
-                "Verification email could not be sent."
-            )
-
-            return jsonify({
-                "message": (
-                    "Hesabınız oluşturuldu ancak "
-                    "doğrulama e-postası gönderilemedi."
-                ),
-                "error": str(mail_error),
-                "email": email,
-                "requires_verification": True
-            }), 503
-
-        # -------------------------------------------------
-        # SUCCESS
-        # -------------------------------------------------
+        access_token = create_access_token(
+            identity=str(user.id)
+        )
 
         return jsonify({
-            "message": (
-                "Kayıt başarılı. "
-                "E-posta adresinize doğrulama kodu gönderildi."
-            ),
-            "email": email,
-            "requires_verification": True
+
+            "message": "Kayıt başarılı.",
+
+            "access_token": access_token,
+
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "is_email_verified": True
+            }
+
         }), 201
 
     except Exception as e:
@@ -766,24 +731,6 @@ def login():
                     "E-posta veya şifre hatalı."
                 )
             }), 401
-
-        # -------------------------------------------------
-        # EMAIL VERIFICATION
-        # -------------------------------------------------
-
-        if not user.is_email_verified:
-
-            return jsonify({
-
-                "message": (
-                    "Lütfen önce e-posta adresinizi doğrulayın."
-                ),
-
-                "requires_verification": True,
-
-                "email": user.email
-
-            }), 403
 
         # -------------------------------------------------
         # JWT

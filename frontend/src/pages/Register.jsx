@@ -115,23 +115,24 @@ function Register() {
     try {
       setLoading(true);
 
-      await register(
+      const data = await register(
         cleanName,
         cleanEmail,
         password
       );
 
       /*
-       * Kayıt başarılı oldu.
-       * Henüz token kaydetmiyoruz.
-       *
-       * Kullanıcı önce e-posta
-       * doğrulama kodunu girecek.
+       * Kayıt başarılı oldu, e-posta
+       * doğrulama adımı yok — kullanıcı
+       * doğrudan giriş yapmış sayılır.
        */
+      localStorage.setItem(
+        "access_token",
+        data.access_token
+      );
+
       navigate(
-        `/email-dogrula?email=${encodeURIComponent(
-          cleanEmail
-        )}`,
+        "/apartman-olustur",
         {
           replace: true,
         }
@@ -319,7 +320,7 @@ function Register() {
           >
 
             {loading
-              ? "Doğrulama kodu gönderiliyor..."
+              ? "Hesap oluşturuluyor..."
               : "Hesap Oluştur"}
 
           </button>
