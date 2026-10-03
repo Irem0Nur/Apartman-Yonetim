@@ -29,13 +29,12 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=1)
 
     # ---------------------------------------------------------
-    # RESEND EMAIL API
+    # SMTP2GO EMAIL API
     # ---------------------------------------------------------
-    RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+    SMTP2GO_API_KEY = os.getenv("SMTP2GO_API_KEY")
 
-    RESEND_FROM_EMAIL = os.getenv(
-        "RESEND_FROM_EMAIL",
-        "onboarding@resend.dev"
+    SMTP2GO_SENDER_EMAIL = os.getenv(
+        "SMTP2GO_SENDER_EMAIL"
     )
 
     # ---------------------------------------------------------
