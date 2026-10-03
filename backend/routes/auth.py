@@ -1622,3 +1622,95 @@ def emergency_recovery():
             "error": str(e)
 
         }), 500
+
+
+# ---------------------------------------------------------
+# EMERGENCY DIAGNOSTICS (read-only)
+#
+# ADMIN_RECOVERY_SECRET ile korunan, hiçbir kaydı
+# değiştirmeyen, sadece hangi kullanıcının hangi
+# apartmanlara sahip olduğunu listeleyen geçici bir
+# yardımcı uç nokta. Sorun çözülünce kaldırılmalı.
+# ---------------------------------------------------------
+
+@auth_bp.route(
+    "/emergency-diagnostics",
+    methods=["POST"]
+)
+def emergency_diagnostics():
+
+    try:
+
+        admin_secret = os.getenv(
+            "ADMIN_RECOVERY_SECRET"
+        )
+
+        if not admin_secret:
+
+            return jsonify({
+                "message": (
+                    "Bu özellik şu anda "
+                    "yapılandırılmamış."
+                )
+            }), 503
+
+        data = request.get_json() or {}
+
+        provided_secret = data.get("secret")
+
+        if (
+            not provided_secret
+            or provided_secret != admin_secret
+        ):
+
+            return jsonify({
+                "message": "Yetkisiz istek."
+            }), 401
+
+        users = User.query.order_by(
+            User.id.asc()
+        ).all()
+
+        result = []
+
+        for user in users:
+
+            apartments = Apartment.query.filter_by(
+                manager_id=user.id
+            ).all()
+
+            result.append({
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "created_at": (
+                    user.created_at.isoformat()
+                    if user.created_at else None
+                ),
+                "google_id": user.google_id,
+                "apartment_count": len(apartments),
+                "apartments": [
+                    apartment.name
+                    for apartment in apartments
+                ],
+            })
+
+        return jsonify({
+            "users": result
+        }), 200
+
+    except Exception as e:
+
+        logger.exception(
+            "Emergency diagnostics error."
+        )
+
+        return jsonify({
+
+            "message": (
+                "İşlem sırasında bir hata oluştu."
+            ),
+
+            "error": str(e)
+
+        }), 500
