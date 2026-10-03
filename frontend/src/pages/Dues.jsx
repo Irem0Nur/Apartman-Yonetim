@@ -1630,10 +1630,27 @@ function Dues() {
                             {formatMoney(
                               getPreviousDebtForDue(
                                 due
-                              )
+                              ) +
+                                Number(
+                                  due.carried_over_amount ||
+                                    0
+                                )
                             )}{" "}
                             TL
                           </strong>
+
+                          {due.carried_over_amount >
+                            0 && (
+
+                            <div className="due-carried-over-hint">
+                              Bu yıl içinden:{" "}
+                              {formatMoney(
+                                due.carried_over_amount
+                              )}{" "}
+                              TL
+                            </div>
+
+                          )}
 
                         </td>
 
@@ -1693,7 +1710,11 @@ function Dues() {
                             }
                           >
                             {due.status ===
-                            "paid"
+                              "paid" &&
+                            !(
+                              due.carried_over_amount >
+                              0
+                            )
                               ? "Ödemeleri Gör"
                               : "+ Ödeme Gir"}
                           </button>
@@ -2169,10 +2190,31 @@ function Dues() {
               </div>
 
 
+              {selectedDue.carried_over_amount >
+                0 && (
+
+                <div>
+
+                  <span>
+                    Geçmiş Aylardan Devreden
+                  </span>
+
+                  <strong className="due-carried-over">
+                    {formatMoney(
+                      selectedDue.carried_over_amount
+                    )}{" "}
+                    TL
+                  </strong>
+
+                </div>
+
+              )}
+
+
               <div>
 
                 <span>
-                  Kalan
+                  Kalan (Toplam)
                 </span>
 
                 <strong>
@@ -2187,8 +2229,10 @@ function Dues() {
             </div>
 
 
-            {selectedDue.status !==
-              "paid" && (
+            {(selectedDue.status !==
+              "paid" ||
+              selectedDue.carried_over_amount >
+                0) && (
 
               <form
                 onSubmit={
@@ -2211,10 +2255,6 @@ function Dues() {
                         name="amount"
                         min="0.01"
                         step="0.01"
-                        max={
-                          selectedDue
-                            .remaining_amount
-                        }
                         value={
                           paymentForm.amount
                         }
@@ -2230,6 +2270,16 @@ function Dues() {
                       </span>
 
                     </div>
+
+                    <p className="field-hint">
+                      Aidat tutarından fazla
+                      girilebilir; fazlası
+                      {selectedDue.carried_over_amount >
+                      0
+                        ? " önce geçmiş aylardan devreden borca mahsup edilir, kalanı "
+                        : " "}
+                      bu aya işlenir.
+                    </p>
 
                   </div>
 

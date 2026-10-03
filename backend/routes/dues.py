@@ -48,6 +48,73 @@ def unit_has_manager(unit):
     )
 
 
+def calculate_own_remaining(due):
+    """
+    Bir aidat kaydının SADECE kendi ayına ait kalan bakiyesi
+    (o aya yapılmış ödemeler düşüldükten sonra). Negatif
+    olamaz (fazla ödeme varsa 0 döner).
+    """
+    total_paid = sum(
+        (
+            payment.amount
+            for payment in due.payments
+        ),
+        Decimal("0")
+    )
+
+    due_amount = Decimal(
+        str(due.amount or 0)
+    )
+
+    remaining = due_amount - total_paid
+
+    if remaining < 0:
+        remaining = Decimal("0")
+
+    return remaining
+
+
+def get_prior_unpaid_dues(unit_id, year, month):
+    """
+    Aynı yıl içinde, verilen aydan önceki aylara ait ve hâlâ
+    bakiyesi (kalan borcu) olan aidat kayıtlarını, en eskiden
+    en yeniye sıralı biçimde döndürür. Bu kayıtlar bir sonraki
+    aya "devreden borç" olarak yansıtılır.
+    """
+    prior_dues = (
+        Due.query
+        .filter(
+            Due.unit_id == unit_id,
+            Due.year == year,
+            Due.month < month,
+        )
+        .order_by(Due.month.asc())
+        .all()
+    )
+
+    return [
+        prior_due
+        for prior_due in prior_dues
+        if calculate_own_remaining(prior_due) > 0
+    ]
+
+
+def calculate_carried_over_amount(due):
+    """
+    Aynı yıl içinde, bu aidattan önceki aylardan devreden
+    (henüz ödenmemiş) toplam tutar.
+    """
+    return sum(
+        (
+            calculate_own_remaining(prior_due)
+            for prior_due in get_prior_unpaid_dues(
+                due.unit_id, due.year, due.month
+            )
+        ),
+        Decimal("0")
+    )
+
+
 def calculate_due_payment(due):
     total_paid = sum(
         (
@@ -61,12 +128,20 @@ def calculate_due_payment(due):
         str(due.amount or 0)
     )
 
-    remaining_amount = (
+    own_remaining_amount = (
         due_amount - total_paid
     )
 
-    if remaining_amount < 0:
-        remaining_amount = Decimal("0")
+    if own_remaining_amount < 0:
+        own_remaining_amount = Decimal("0")
+
+    carried_over_amount = calculate_carried_over_amount(due)
+
+    # "Kalan": bu ayın kendi bakiyesi + aynı yıl içinden
+    # devreden (önceki ayların ödenmemiş) tutarı.
+    remaining_amount = (
+        own_remaining_amount + carried_over_amount
+    )
 
     if due_amount == 0:
         # Yönetici dairesi: tahakkuk yok, sadece
@@ -84,6 +159,8 @@ def calculate_due_payment(due):
 
     return {
         "paid_amount": total_paid,
+        "own_remaining_amount": own_remaining_amount,
+        "carried_over_amount": carried_over_amount,
         "remaining_amount": remaining_amount,
         "status": status,
     }
@@ -125,6 +202,20 @@ def due_to_dict(due):
             float(
                 payment_info[
                     "paid_amount"
+                ]
+            ),
+
+        "own_remaining_amount":
+            float(
+                payment_info[
+                    "own_remaining_amount"
+                ]
+            ),
+
+        "carried_over_amount":
+            float(
+                payment_info[
+                    "carried_over_amount"
                 ]
             ),
 

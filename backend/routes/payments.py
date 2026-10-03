@@ -6,6 +6,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from extensions import db
 from models import Payment, Due, Unit, Apartment
+from routes.dues import calculate_own_remaining, get_prior_unpaid_dues
 
 
 payments_bp = Blueprint(
@@ -301,28 +302,16 @@ def create_payment():
             "message": "Ödeme tutarı sıfırdan büyük olmalıdır."
         }), 400
 
-    paid_amount = sum(
-        (
-            Decimal(str(payment.amount))
-            for payment in due.payments
-        ),
-        Decimal("0.00")
-    )
-
     due_amount = Decimal(str(due.amount))
-    remaining_amount = due_amount - paid_amount
+    own_remaining_amount = calculate_own_remaining(due)
 
-    # Tahakkuku 0 olan daireler (yönetici daireleri) için
-    # üst sınır uygulanmaz; istedikleri zaman gönüllü ödeme
-    # ekleyebilirler.
-    if due_amount > 0 and payment_amount > remaining_amount:
-        return jsonify({
-            "message": (
-                f"Ödeme tutarı kalan borçtan fazla olamaz. "
-                f"Kalan borç: {float(remaining_amount):.2f} TL"
-            )
-        }), 400
-
+    # Aidat tutarından fazla ödeme yapılabilir (örn. Ocak ayı
+    # aidatı 700 TL iken 2100 TL ödeme girilebilir); fazlası
+    # doğrudan bu aya işlenir. Eğer girilen tutar bu ayın kendi
+    # bakiyesini aşıyorsa ve aynı yıl içinde önceki aylardan
+    # ödenmemiş aidat varsa, fazlalık önce o eski aylara
+    # (en eskiden en yeniye) mahsup edilir; artan tutar bu aya
+    # yazılır.
     payment_date_text = data.get("payment_date")
 
     if payment_date_text:
@@ -338,20 +327,91 @@ def create_payment():
     else:
         payment_date = datetime.today().date()
 
-    payment = Payment(
-        due_id=due.id,
-        amount=payment_amount,
-        payment_date=payment_date,
-        payment_method=data.get("payment_method"),
-        description=data.get("description"),
-    )
+    payment_method = data.get("payment_method")
+    description = data.get("description")
 
-    db.session.add(payment)
+    created_payments = []
+    allocations = []
+    leftover = payment_amount
+
+    # Girilen tutar bu ayın kendi bakiyesinden fazlaysa ve aynı
+    # yıl içinde önceki aylardan ödenmemiş aidat varsa (devreden
+    # borç), fazlalığı en eski aydan başlayarak o kayıtlara
+    # mahsup ediyoruz. Tahakkuku 0 olan (yönetici) daireler için
+    # bu mahsup hiç tetiklenmez; ödeme doğrudan seçilen aya yazılır.
+    if due_amount > 0 and leftover > own_remaining_amount:
+        for prior_due in get_prior_unpaid_dues(
+            due.unit_id, due.year, due.month
+        ):
+            if leftover <= 0:
+                break
+
+            prior_remaining = calculate_own_remaining(prior_due)
+
+            if prior_remaining <= 0:
+                continue
+
+            allocate_amount = min(prior_remaining, leftover)
+
+            prior_payment = Payment(
+                due_id=prior_due.id,
+                amount=allocate_amount,
+                payment_date=payment_date,
+                payment_method=payment_method,
+                description=(
+                    description
+                    or f"{due.month}. ay ödemesinden mahsup"
+                ),
+            )
+
+            db.session.add(prior_payment)
+            created_payments.append(prior_payment)
+
+            allocations.append({
+                "due_id": prior_due.id,
+                "year": prior_due.year,
+                "month": prior_due.month,
+                "amount": float(allocate_amount),
+            })
+
+            leftover -= allocate_amount
+
+    if leftover > 0:
+        payment = Payment(
+            due_id=due.id,
+            amount=leftover,
+            payment_date=payment_date,
+            payment_method=payment_method,
+            description=description,
+        )
+
+        db.session.add(payment)
+        created_payments.append(payment)
+
+        allocations.append({
+            "due_id": due.id,
+            "year": due.year,
+            "month": due.month,
+            "amount": float(leftover),
+        })
+
     db.session.commit()
 
+    message = "Ödeme başarıyla kaydedildi."
+
+    if len(created_payments) > 1:
+        message = (
+            "Ödeme kaydedildi; bir kısmı geçmiş aylardan "
+            "devreden borca mahsup edildi."
+        )
+
     return jsonify({
-        "message": "Ödeme başarıyla kaydedildi.",
-        "payment": payment_to_dict(payment)
+        "message": message,
+        "payment": payment_to_dict(created_payments[-1]),
+        "payments": [
+            payment_to_dict(p) for p in created_payments
+        ],
+        "allocations": allocations,
     }), 201
 
 
