@@ -435,7 +435,12 @@ function BusinessLedger() {
 
           <div className="menu-title">YÖNETİM</div>
 
-          <button className="menu-item">📒 Karar Defteri</button>
+          <button
+            className="menu-item"
+            onClick={() => navigate("/kararlar")}
+          >
+            📒 Karar Defteri
+          </button>
 
           <button className="menu-item">📅 Toplantılar</button>
 

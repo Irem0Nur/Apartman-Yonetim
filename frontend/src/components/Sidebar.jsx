@@ -128,7 +128,7 @@ function Sidebar({ active }) {
       <button
         className={menuClass("decisions")}
         onClick={() =>
-        navigate("/karar-defteri")
+        navigate("/kararlar")
        }
       >
       📒 Karar Defteri

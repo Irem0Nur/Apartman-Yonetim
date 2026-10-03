@@ -841,7 +841,7 @@ function Dashboard() {
                 type="button"
                 onClick={() =>
                   navigate(
-                    "/karar-defteri"
+                    "/kararlar"
                   )
                 }
               >
