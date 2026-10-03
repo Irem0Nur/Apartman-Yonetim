@@ -1,9 +1,13 @@
 import os
 import logging
 import random
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import resend
+
+from google.oauth2 import id_token as google_id_token
+from google.auth.transport import requests as google_auth_requests
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import (
@@ -43,6 +47,13 @@ RESEND_FROM_EMAIL = os.getenv(
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
+
+
+# ---------------------------------------------------------
+# GOOGLE İLE GİRİŞ
+# ---------------------------------------------------------
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 
 
 # ---------------------------------------------------------
@@ -764,6 +775,159 @@ def login():
         return jsonify({
 
             "message": "Giriş sırasında bir hata oluştu.",
+
+            "error": str(e)
+
+        }), 500
+
+
+@auth_bp.route(
+    "/google",
+    methods=["POST"]
+)
+def google_login():
+
+    try:
+
+        if not GOOGLE_CLIENT_ID:
+
+            return jsonify({
+                "message": (
+                    "Google ile giriş şu anda "
+                    "yapılandırılmamış."
+                )
+            }), 503
+
+        data = request.get_json()
+
+        credential = (
+            data.get("credential")
+            if data else None
+        )
+
+        if not credential:
+
+            return jsonify({
+                "message": (
+                    "Google kimlik bilgisi eksik."
+                )
+            }), 400
+
+        try:
+            idinfo = google_id_token.verify_oauth2_token(
+                credential,
+                google_auth_requests.Request(),
+                GOOGLE_CLIENT_ID,
+            )
+        except ValueError:
+
+            logger.exception(
+                "Google token doğrulaması başarısız."
+            )
+
+            return jsonify({
+                "message": (
+                    "Google doğrulaması başarısız."
+                )
+            }), 401
+
+        email = (
+            idinfo.get("email") or ""
+        ).strip().lower()
+
+        google_sub = idinfo.get("sub")
+
+        if not email or not idinfo.get("email_verified"):
+
+            return jsonify({
+                "message": (
+                    "Google hesabınızın e-postası "
+                    "doğrulanmamış."
+                )
+            }), 401
+
+        name = (
+            idinfo.get("name")
+            or email.split("@")[0]
+        )
+
+        # -------------------------------------------------
+        # Önce google_id ile, bulunamazsa e-posta ile ara
+        # (daha önce e-posta/şifre ile kayıt olmuş bir
+        # hesap Google hesabıyla eşleştirilsin).
+        # -------------------------------------------------
+
+        user = User.query.filter_by(
+            google_id=google_sub
+        ).first()
+
+        if not user:
+            user = User.query.filter_by(
+                email=email
+            ).first()
+
+        if user:
+
+            if not user.google_id:
+                user.google_id = google_sub
+
+            if not user.is_email_verified:
+                user.is_email_verified = True
+
+            db.session.commit()
+
+        else:
+
+            user = User(
+                name=name,
+                email=email,
+                password_hash="",
+                is_email_verified=True,
+                google_id=google_sub,
+            )
+
+            # Google ile oluşturulan hesaplarda normal
+            # e-posta/şifre girişi kullanılmayacağı için
+            # rastgele, kullanıcıya hiç gösterilmeyen bir
+            # şifre atanır.
+            user.set_password(
+                secrets.token_urlsafe(32)
+            )
+
+            db.session.add(user)
+            db.session.commit()
+
+        access_token = create_access_token(
+            identity=str(user.id)
+        )
+
+        return jsonify({
+
+            "message": "Google ile giriş başarılı.",
+
+            "access_token": access_token,
+
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "is_email_verified": True
+            }
+
+        }), 200
+
+    except Exception as e:
+
+        logger.exception(
+            "Google login error."
+        )
+
+        return jsonify({
+
+            "message": (
+                "Google ile giriş sırasında "
+                "bir hata oluştu."
+            ),
 
             "error": str(e)
 

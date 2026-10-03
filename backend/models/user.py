@@ -54,6 +54,12 @@ class User(db.Model):
         nullable=True
     )
 
+    google_id = db.Column(
+        db.String(255),
+        unique=True,
+        nullable=True
+    )
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow

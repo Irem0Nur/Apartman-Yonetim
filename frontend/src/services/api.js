@@ -37,6 +37,35 @@ export async function login(email, password) {
 }
 
 
+export async function googleLogin(credential) {
+  const response = await fetch(
+    `${API_URL}/auth/google`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json",
+      },
+
+      body: JSON.stringify({
+        credential,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Google ile giriş yapılamadı"
+    );
+  }
+
+  return data;
+}
+
+
 export async function getCurrentUser(token) {
   if (
     !token ||

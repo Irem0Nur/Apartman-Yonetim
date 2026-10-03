@@ -7,8 +7,11 @@ import {
 
 import {
   login,
+  googleLogin,
   getApartments,
 } from "../services/api";
+
+import GoogleSignInButton from "../components/GoogleSignInButton";
 
 
 function Login() {
@@ -36,6 +39,47 @@ function Login() {
 
   const [loading, setLoading] =
     useState(false);
+
+  const [googleLoading, setGoogleLoading] =
+    useState(false);
+
+
+  /*
+   * Giriş başarılı olduğunda token'ı kaydeder,
+   * kullanıcının apartmanı var mı kontrol edip
+   * uygun sayfaya yönlendirir. Hem normal giriş
+   * hem de Google ile giriş bu akışı paylaşır.
+   */
+  async function afterLogin(data) {
+    localStorage.setItem(
+      "access_token",
+      data.access_token
+    );
+
+    const apartments =
+      await getApartments(
+        data.access_token
+      );
+
+    if (
+      Array.isArray(apartments) &&
+      apartments.length > 0
+    ) {
+      navigate(
+        "/dashboard",
+        {
+          replace: true,
+        }
+      );
+    } else {
+      navigate(
+        "/apartman-olustur",
+        {
+          replace: true,
+        }
+      );
+    }
+  }
 
 
   async function handleSubmit(event) {
@@ -73,42 +117,7 @@ function Login() {
           password
         );
 
-      /*
-       * Login başarılı olmadan
-       * token kaydedilmez.
-       */
-      localStorage.setItem(
-        "access_token",
-        data.access_token
-      );
-
-      /*
-       * Kullanıcının kendisine ait
-       * apartmanı var mı kontrol ediyoruz.
-       */
-      const apartments =
-        await getApartments(
-          data.access_token
-        );
-
-      if (
-        Array.isArray(apartments) &&
-        apartments.length > 0
-      ) {
-        navigate(
-          "/dashboard",
-          {
-            replace: true,
-          }
-        );
-      } else {
-        navigate(
-          "/apartman-olustur",
-          {
-            replace: true,
-          }
-        );
-      }
+      await afterLogin(data);
 
     } catch (err) {
       /*
@@ -126,6 +135,33 @@ function Login() {
 
     } finally {
       setLoading(false);
+    }
+  }
+
+
+  async function handleGoogleCredential(credential) {
+    setError("");
+
+    try {
+      setGoogleLoading(true);
+
+      const data =
+        await googleLogin(credential);
+
+      await afterLogin(data);
+
+    } catch (err) {
+      localStorage.removeItem(
+        "access_token"
+      );
+
+      setError(
+        err.message ||
+        "Google ile giriş yapılamadı."
+      );
+
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -255,6 +291,17 @@ function Login() {
           </button>
 
         </form>
+
+
+        <GoogleSignInButton
+          onCredential={handleGoogleCredential}
+        />
+
+        {googleLoading && (
+          <div className="google-signin-status">
+            Google ile giriş yapılıyor...
+          </div>
+        )}
 
 
         <div className="register-link">

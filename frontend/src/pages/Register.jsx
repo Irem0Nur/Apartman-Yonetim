@@ -9,7 +9,11 @@ import {
 
 import {
   register,
+  googleLogin,
+  getApartments,
 } from "../services/api";
+
+import GoogleSignInButton from "../components/GoogleSignInButton";
 
 
 function Register() {
@@ -42,6 +46,66 @@ function Register() {
 
   const [loading, setLoading] =
     useState(false);
+
+  const [googleLoading, setGoogleLoading] =
+    useState(false);
+
+
+  async function handleGoogleCredential(
+    credential
+  ) {
+    setError("");
+
+    try {
+      setGoogleLoading(true);
+
+      const data = await googleLogin(
+        credential
+      );
+
+      localStorage.setItem(
+        "access_token",
+        data.access_token
+      );
+
+      /*
+       * Google hesabı daha önce kayıt olmuş olabilir;
+       * apartmanı varsa doğrudan dashboard'a,
+       * yoksa apartman oluşturma adımına yönlendir.
+       */
+      const apartments = await getApartments(
+        data.access_token
+      );
+
+      if (
+        Array.isArray(apartments) &&
+        apartments.length > 0
+      ) {
+        navigate(
+          "/dashboard",
+          {
+            replace: true,
+          }
+        );
+      } else {
+        navigate(
+          "/apartman-olustur",
+          {
+            replace: true,
+          }
+        );
+      }
+
+    } catch (err) {
+      setError(
+        err.message ||
+        "Google ile giriş yapılamadı."
+      );
+
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
 
 
   async function handleSubmit(
@@ -326,6 +390,17 @@ function Register() {
           </button>
 
         </form>
+
+
+        <GoogleSignInButton
+          onCredential={handleGoogleCredential}
+        />
+
+        {googleLoading && (
+          <div className="google-signin-status">
+            Google ile hesap oluşturuluyor...
+          </div>
+        )}
 
 
         <div className="register-link">
