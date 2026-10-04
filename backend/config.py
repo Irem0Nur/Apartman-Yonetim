@@ -17,6 +17,19 @@ class Config:
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+    # Render'ın ücretsiz Postgres veritabanı, uzun süre
+    # boşta kalan bağlantıları sunucu tarafında kapatıyor.
+    # pool_pre_ping, havuzdaki bir bağlantıyı kullanmadan
+    # önce canlı olup olmadığını kontrol edip gerekirse
+    # otomatik olarak yenisini açar; bu sayede "SSL
+    # connection has been closed unexpectedly" gibi
+    # hatalar önlenir. pool_recycle de bağlantıları Render'ın
+    # zaman aşımından önce proaktif olarak tazeler.
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "pool_pre_ping": True,
+        "pool_recycle": 280,
+    }
+
     # ---------------------------------------------------------
     # JWT
     # ---------------------------------------------------------
