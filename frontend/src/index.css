@@ -1289,6 +1289,27 @@ input {
   color: #15803d;
 }
 
+.payment-type-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.payment-type-badge.due {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.payment-type-badge.debt {
+  background: #fdf4ff;
+  color: #a21caf;
+}
+
 .dues-payment-note {
   margin-top: 14px;
   color: #94a3b8;

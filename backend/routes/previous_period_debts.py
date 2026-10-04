@@ -11,6 +11,7 @@ from models import (
     Unit,
     PreviousPeriodDebt,
     PreviousPeriodDebtPayment,
+    Transaction,
 )
 
 
@@ -88,6 +89,18 @@ def get_people_for_unit(unit):
         return residents
 
     return get_owner_names(unit)
+
+
+def get_unit_label(unit):
+    if not unit:
+        return "-"
+
+    block_name = unit.block_name or ""
+
+    if block_name:
+        return f"{block_name} / Daire {unit.unit_number}"
+
+    return f"Daire {unit.unit_number}"
 
 
 def calculate_debt_payment(debt):
@@ -652,6 +665,58 @@ def create_debt_payment(debt_id):
     )
 
     db.session.add(payment)
+
+    # --------------------------------------------------
+    # Bu ödeme için işletme defterine (ve dolayısıyla
+    # Kasa'ya) otomatik bir gelir kaydı düşülür, böylece
+    # "Önceki dönem borcunun bir kısmını ödedi" bilgisi
+    # Ödemeler / İşletme Defteri / Kasa sayfalarında da
+    # görünür.
+    # --------------------------------------------------
+
+    unit = debt.unit
+
+    people = get_people_for_unit(unit)
+
+    payer_label = (
+        ", ".join(people)
+        if people
+        else "Sakin eklenmedi"
+    )
+
+    description_parts = [
+        get_unit_label(unit),
+        payer_label,
+        "Önceki dönem borç ödemesi",
+    ]
+
+    if debt.period:
+        description_parts.append(
+            f"({debt.period})"
+        )
+
+    transaction = Transaction(
+        apartment_id=unit.apartment_id,
+        transaction_type="income",
+        category="Önceki Dönem Borç Tahsilatı",
+        amount=payment_amount,
+        transaction_date=payment_date,
+        payment_method=data.get(
+            "payment_method"
+        ),
+        description=" - ".join(
+            description_parts
+        ),
+        unit_id=unit.id,
+        payer_name=payer_label,
+        source="previous_debt_payment",
+    )
+
+    db.session.add(transaction)
+    db.session.flush()
+
+    payment.transaction_id = transaction.id
+
     db.session.commit()
 
     return jsonify({
@@ -711,6 +776,14 @@ def delete_debt_payment(payment_id):
                 "Ödeme bulunamadı veya yetkiniz yok."
         }), 404
 
+    if payment.transaction_id:
+        linked_transaction = Transaction.query.get(
+            payment.transaction_id
+        )
+
+        if linked_transaction:
+            db.session.delete(linked_transaction)
+
     db.session.delete(payment)
     db.session.commit()
 
@@ -718,3 +791,97 @@ def delete_debt_payment(payment_id):
         "message":
             "Ödeme başarıyla silindi."
     }), 200
+
+
+# --------------------------------------------------
+# APARTMANIN BELİRLİ BİR DÖNEMDEKİ TÜM BORÇ
+# ÖDEMELERİ (Ödemeler sayfasında aidat ödemeleriyle
+# birlikte gösterebilmek için).
+# --------------------------------------------------
+
+@previous_period_debts_bp.route(
+    "/payments/apartment/<int:apartment_id>",
+    methods=["GET"]
+)
+@jwt_required()
+def get_apartment_debt_payments(apartment_id):
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    apartment = get_owned_apartment(
+        apartment_id,
+        user_id
+    )
+
+    if not apartment:
+        return jsonify({
+            "message":
+                "Apartman bulunamadı veya yetkiniz yok."
+        }), 404
+
+    query = (
+        PreviousPeriodDebtPayment.query
+        .join(
+            PreviousPeriodDebt,
+            PreviousPeriodDebtPayment.debt_id
+            == PreviousPeriodDebt.id
+        )
+        .join(
+            Unit,
+            PreviousPeriodDebt.unit_id == Unit.id
+        )
+        .filter(
+            Unit.apartment_id == apartment_id
+        )
+    )
+
+    year = request.args.get(
+        "year",
+        type=int
+    )
+
+    month = request.args.get(
+        "month",
+        type=int
+    )
+
+    if year:
+        query = query.filter(
+            db.extract(
+                "year",
+                PreviousPeriodDebtPayment.payment_date
+            ) == year
+        )
+
+    if month:
+        query = query.filter(
+            db.extract(
+                "month",
+                PreviousPeriodDebtPayment.payment_date
+            ) == month
+        )
+
+    payments = (
+        query
+        .order_by(
+            PreviousPeriodDebtPayment.payment_date.desc(),
+            PreviousPeriodDebtPayment.id.desc()
+        )
+        .all()
+    )
+
+    result = []
+
+    for payment in payments:
+        unit = payment.debt.unit
+
+        data = payment_to_dict(payment)
+
+        data["debt_period"] = payment.debt.period
+        data["people"] = get_people_for_unit(unit)
+
+        result.append(data)
+
+    return jsonify(result), 200

@@ -1029,6 +1029,53 @@ export async function getPayments(
 }
 
 
+export async function getApartmentDebtPayments(
+  token,
+  apartmentId,
+  year,
+  month
+) {
+  const params =
+    new URLSearchParams();
+
+  if (year) {
+    params.append(
+      "year",
+      year
+    );
+  }
+
+  if (month) {
+    params.append(
+      "month",
+      month
+    );
+  }
+
+  const response = await fetch(
+    `${API_URL}/previous-period-debts/payments/apartment/${apartmentId}?${params.toString()}`,
+    {
+      headers: {
+        Authorization:
+          `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Önceki dönem borç ödemeleri alınamadı"
+    );
+  }
+
+  return data;
+}
+
+
 export async function getYearlyPaymentReport(
   token,
   apartmentId,

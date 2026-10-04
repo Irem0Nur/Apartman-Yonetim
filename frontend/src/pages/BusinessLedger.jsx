@@ -78,6 +78,7 @@ function BusinessLedger() {
     document_number: "",
     payment_method: "",
     description: "",
+    payer_name: "",
   });
 
 
@@ -180,6 +181,7 @@ function BusinessLedger() {
       document_number: "",
       payment_method: "",
       description: "",
+      payer_name: "",
     });
 
     setError("");
@@ -198,6 +200,7 @@ function BusinessLedger() {
       document_number: transaction.document_number || "",
       payment_method: transaction.payment_method || "",
       description: transaction.description || "",
+      payer_name: transaction.payer_name || "",
     });
 
     setError("");
@@ -259,6 +262,7 @@ function BusinessLedger() {
         document_number: form.document_number.trim(),
         payment_method: form.payment_method.trim(),
         description: form.description.trim(),
+        payer_name: form.payer_name.trim(),
       };
 
       if (editingTransaction) {
@@ -313,20 +317,33 @@ function BusinessLedger() {
       .filter((item) => item.transaction_type === "income")
       .map((item) => ({
         ...item,
-        source: "manual",
+        source: item.source || "manual",
+        payer: item.payer_name || item.unit_label || "",
       }));
 
-    const automaticIncome = payments.map((payment) => ({
-      id: `payment-${payment.id}`,
-      transaction_type: "income",
-      category: "Aidat Tahsilatı",
-      amount: Number(payment.amount || 0),
-      transaction_date: payment.payment_date,
-      document_number: payment.document_number || "",
-      payment_method: payment.payment_method || "",
-      description: payment.description || "Aidat ödemesi",
-      source: "payment",
-    }));
+    const automaticIncome = payments.map((payment) => {
+      const unitLabel = payment.block_name
+        ? `${payment.block_name} / Daire ${payment.unit_number}`
+        : `Daire ${payment.unit_number}`;
+
+      const owners =
+        payment.owners?.length > 0
+          ? payment.owners.join(", ")
+          : "Malik eklenmedi";
+
+      return {
+        id: `payment-${payment.id}`,
+        transaction_type: "income",
+        category: "Aidat Tahsilatı",
+        amount: Number(payment.amount || 0),
+        transaction_date: payment.payment_date,
+        document_number: payment.document_number || "",
+        payment_method: payment.payment_method || "",
+        description: payment.description || "Aidat ödemesi",
+        source: "payment",
+        payer: `${unitLabel} — ${owners}`,
+      };
+    });
 
     return [...manualIncome, ...automaticIncome].sort((a, b) =>
       String(b.transaction_date || "").localeCompare(
@@ -342,7 +359,8 @@ function BusinessLedger() {
         .filter((item) => item.transaction_type === "expense")
         .map((item) => ({
           ...item,
-          source: "manual",
+          source: item.source || "manual",
+          payer: item.payer_name || item.unit_label || "",
         })),
     [transactions]
   );
@@ -718,6 +736,17 @@ function BusinessLedger() {
                   />
                 </div>
 
+                <div className="form-group">
+                  <label>Kişi / Daire (opsiyonel)</label>
+
+                  <input
+                    name="payer_name"
+                    value={form.payer_name}
+                    onChange={handleChange}
+                    placeholder="Örn. A1 / Daire 3 - Ahmet Yılmaz"
+                  />
+                </div>
+
                 <div className="form-group full">
                   <label>Açıklama / Not</label>
 
@@ -822,6 +851,11 @@ function LedgerTable({
               No
             </th>
             <th className="kd-c-aciklama">Açıklama</th>
+            <th className="kd-c-kisi">
+              Kişi
+              <br />
+              Daire
+            </th>
             <th className="kd-c-odeme">
               Ödeme
               <br />
@@ -856,12 +890,17 @@ function LedgerTable({
                   <small className="kd-not"> — {row.description}</small>
                 )}
 
-                {row.source === "payment" && (
+                {(row.source === "payment" ||
+                  row.source === "previous_debt_payment") && (
                   <span className="ledger-auto-badge kd-no-print">
                     Otomatik
                   </span>
                 )}
 
+              </td>
+
+              <td className="kd-ort kd-kisi-hucre">
+                {row.payer || "-"}
               </td>
 
               <td className="kd-ort">{row.payment_method || ""}</td>
@@ -911,6 +950,7 @@ function LedgerTable({
               <td />
               <td />
               <td />
+              <td />
               <td className="kd-no-print" />
 
             </tr>
@@ -921,7 +961,7 @@ function LedgerTable({
 
         <tfoot>
           <tr>
-            <td colSpan={5} className="kd-toplam-etiket">
+            <td colSpan={6} className="kd-toplam-etiket">
               Toplam
             </td>
             <td className="kd-sag kd-toplam-deger">

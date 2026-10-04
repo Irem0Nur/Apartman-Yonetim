@@ -103,17 +103,23 @@
   background: rgba(107, 122, 144, 0.08);
 }
 
-.kd-c-sira    { width: 8%; }
-.kd-c-tarih   { width: 15%; }
-.kd-c-belge   { width: 11%; }
-.kd-c-odeme   { width: 13%; }
-.kd-c-tutar   { width: 16%; }
-.kd-c-islem   { width: 17%; }
+.kd-c-sira    { width: 7%; }
+.kd-c-tarih   { width: 12%; }
+.kd-c-belge   { width: 9%; }
+.kd-c-kisi    { width: 15%; }
+.kd-c-odeme   { width: 11%; }
+.kd-c-tutar   { width: 14%; }
+.kd-c-islem   { width: 15%; }
 
 .kd-ort { text-align: center; }
 .kd-sag { text-align: right; font-variant-numeric: tabular-nums; }
 .kd-bos td:first-child { color: #b6bfcc; }
 .kd-not { color: #6b7280; }
+
+.kd-kisi-hucre {
+  font-size: 0.78rem;
+  color: #374151;
+}
 
 .kd-tablo tfoot td {
   border-top: 2px solid var(--kd-cizgi);

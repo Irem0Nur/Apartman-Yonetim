@@ -286,7 +286,10 @@ def get_cash(apartment_id):
                 or "-"
             ),
             "payment_method": None,
-            "deletable": True,
+            "deletable": (
+                (transaction.source or "manual")
+                == "manual"
+            ),
         })
 
     movements.sort(

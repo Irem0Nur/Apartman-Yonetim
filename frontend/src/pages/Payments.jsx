@@ -5,6 +5,7 @@ import Sidebar from "../components/Sidebar";
 import {
   getApartments,
   getPayments,
+  getApartmentDebtPayments,
   getYearlyPaymentReport,
   deletePayment,
   getPreviousPeriodDebts,
@@ -42,6 +43,8 @@ function Payments() {
   const [activeTab, setActiveTab] = useState("yearly");
 
   const [payments, setPayments] = useState([]);
+
+  const [debtPayments, setDebtPayments] = useState([]);
 
   const [yearlyReport, setYearlyReport] = useState({
     rows: [],
@@ -166,14 +169,24 @@ function Payments() {
       setLoading(true);
       setError("");
 
-      const data = await getPayments(
-        token,
-        apartment.id,
-        year,
-        month
-      );
+      const [dueData, debtData] = await Promise.all([
+        getPayments(
+          token,
+          apartment.id,
+          year,
+          month
+        ),
 
-      setPayments(data);
+        getApartmentDebtPayments(
+          token,
+          apartment.id,
+          year,
+          month
+        ),
+      ]);
+
+      setPayments(dueData);
+      setDebtPayments(debtData);
 
     } catch (err) {
       setError(err.message);
@@ -257,6 +270,63 @@ function Payments() {
       setError(err.message);
     }
   }
+
+
+  async function handleDeleteDebtPaymentRow(paymentId) {
+    const confirmed = window.confirm(
+      "Bu önceki dönem borç ödemesini silmek istediğinize emin misiniz?\n\n" +
+      "Ödeme silindiğinde ilgili dairenin devreden borcu tekrar artacak " +
+      "ve işletme defterindeki otomatik gelir kaydı da silinecektir."
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setMessage("");
+      setError("");
+
+      await deletePreviousPeriodDebtPayment(
+        token,
+        paymentId
+      );
+
+      setMessage(
+        "Ödeme kaydı başarıyla silindi."
+      );
+
+      await loadPayments();
+
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+
+  const combinedPaymentRows = useMemo(() => {
+    const dueRows = payments.map((payment) => ({
+      ...payment,
+      kind: "due",
+      period_label: `${getMonthName(payment.month)} ${payment.year}`,
+    }));
+
+    const debtRows = debtPayments.map((payment) => ({
+      ...payment,
+      kind: "debt",
+      owners: payment.people || [],
+      period_label:
+        payment.debt_period
+          ? `Devreden borç (${payment.debt_period})`
+          : "Devreden borç",
+    }));
+
+    return [...dueRows, ...debtRows].sort((a, b) =>
+      String(b.payment_date || "").localeCompare(
+        String(a.payment_date || "")
+      )
+    );
+  }, [payments, debtPayments]);
 
 
   // ---------------------------------------------------
@@ -503,14 +573,14 @@ function Payments() {
   const totalCollected =
     useMemo(() => {
 
-      return payments.reduce(
+      return combinedPaymentRows.reduce(
         (total, payment) =>
           total +
           Number(payment.amount || 0),
         0
       );
 
-    }, [payments]);
+    }, [combinedPaymentRows]);
 
 
   function formatMoney(value) {
@@ -1261,7 +1331,7 @@ function Payments() {
                 </span>
 
                 <strong>
-                  {payments.length}
+                  {combinedPaymentRows.length}
                 </strong>
 
               </div>
@@ -1277,7 +1347,7 @@ function Payments() {
                   Ödemeler yükleniyor...
                 </p>
 
-              ) : payments.length === 0 ? (
+              ) : combinedPaymentRows.length === 0 ? (
 
                 <div className="empty-state">
 
@@ -1316,7 +1386,11 @@ function Payments() {
                         </th>
 
                         <th>
-                          Aidat Dönemi
+                          Tür
+                        </th>
+
+                        <th>
+                          Dönem
                         </th>
 
                         <th>
@@ -1342,12 +1416,12 @@ function Payments() {
 
                     <tbody>
 
-                      {payments.map(
+                      {combinedPaymentRows.map(
                         (payment) => (
 
                           <tr
                             key={
-                              payment.id
+                              `${payment.kind}-${payment.id}`
                             }
                           >
 
@@ -1390,10 +1464,24 @@ function Payments() {
 
                             <td>
 
-                              {getMonthName(
-                                payment.month
-                              )}{" "}
-                              {payment.year}
+                              <span
+                                className={
+                                  payment.kind === "debt"
+                                    ? "payment-type-badge debt"
+                                    : "payment-type-badge due"
+                                }
+                              >
+                                {payment.kind === "debt"
+                                  ? "Devreden Borç"
+                                  : "Aidat"}
+                              </span>
+
+                            </td>
+
+
+                            <td>
+
+                              {payment.period_label}
 
                             </td>
 
@@ -1432,9 +1520,13 @@ function Payments() {
                               <button
                                 className="danger-button small-button"
                                 onClick={() =>
-                                  handleDelete(
-                                    payment.id
-                                  )
+                                  payment.kind === "debt"
+                                    ? handleDeleteDebtPaymentRow(
+                                        payment.id
+                                      )
+                                    : handleDelete(
+                                        payment.id
+                                      )
                                 }
                               >
                                 Sil

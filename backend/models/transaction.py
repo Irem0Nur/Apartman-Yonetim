@@ -52,6 +52,33 @@ class Transaction(db.Model):
         nullable=True
     )
 
+    # Bu gelir/gider hangi daireye ait (varsa). Örn. önceki
+    # dönem borç ödemesinden otomatik oluşan kayıtlarda dolu
+    # olur; elle girilen kayıtlarda boş kalabilir.
+    unit_id = db.Column(
+        db.Integer,
+        db.ForeignKey("units.id"),
+        nullable=True
+    )
+
+    # Ödemeyi/işlemi yapan kişinin adı (serbest metin).
+    # unit_id doluysa genelde o dairenin sakin/malikinden
+    # otomatik doldurulur, ama elle de girilebilir.
+    payer_name = db.Column(
+        db.String(255),
+        nullable=True
+    )
+
+    # "manual": kullanıcı tarafından elle eklendi.
+    # "previous_debt_payment": önceki dönem borç ödemesinden
+    # otomatik oluşturuldu (bu kayıtlar ait oldukları ödeme
+    # üzerinden silinmelidir, doğrudan silinemez).
+    source = db.Column(
+        db.String(30),
+        nullable=False,
+        default="manual"
+    )
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
@@ -60,5 +87,10 @@ class Transaction(db.Model):
 
     apartment = db.relationship(
         "Apartment",
+        backref="transactions"
+    )
+
+    unit = db.relationship(
+        "Unit",
         backref="transactions"
     )

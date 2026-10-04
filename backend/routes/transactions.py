@@ -8,6 +8,18 @@ from extensions import db
 from models import Transaction, Apartment, Payment, Due, Unit
 
 
+def get_unit_label(unit):
+    if not unit:
+        return None
+
+    block_name = unit.block_name or ""
+
+    if block_name:
+        return f"{block_name} / Daire {unit.unit_number}"
+
+    return f"Daire {unit.unit_number}"
+
+
 transactions_bp = Blueprint(
     "transactions",
     __name__,
@@ -30,6 +42,10 @@ def transaction_to_dict(transaction):
         "document_number": transaction.document_number,
         "payment_method": transaction.payment_method,
         "description": transaction.description,
+        "unit_id": transaction.unit_id,
+        "unit_label": get_unit_label(transaction.unit),
+        "payer_name": transaction.payer_name,
+        "source": transaction.source or "manual",
         "created_at": (
             transaction.created_at.isoformat()
             if transaction.created_at
@@ -340,6 +356,10 @@ def create_transaction():
         data.get("description", "")
     ).strip() or None
 
+    payer_name = str(
+        data.get("payer_name", "")
+    ).strip() or None
+
     apartment = get_owned_apartment(
         apartment_id,
         user_id
@@ -395,6 +415,8 @@ def create_transaction():
         document_number=document_number,
         payment_method=payment_method,
         description=description,
+        payer_name=payer_name,
+        source="manual",
     )
 
     db.session.add(transaction)
@@ -446,6 +468,15 @@ def update_transaction(transaction_id):
             "Kayıt bulunamadı veya yetkiniz yok."
         }), 404
 
+    if transaction.source != "manual":
+        return jsonify({
+            "message": (
+                "Bu kayıt bir borç ödemesinden "
+                "otomatik oluşturuldu; değiştirmek "
+                "için ilgili ödeme kaydını kullanın."
+            )
+        }), 400
+
     data = request.get_json() or {}
 
     transaction_type = data.get(
@@ -492,6 +523,13 @@ def update_transaction(transaction_id):
         data.get(
             "description",
             transaction.description or ""
+        )
+    ).strip() or None
+
+    payer_name = str(
+        data.get(
+            "payer_name",
+            transaction.payer_name or ""
         )
     ).strip() or None
 
@@ -556,6 +594,10 @@ def update_transaction(transaction_id):
         description
     )
 
+    transaction.payer_name = (
+        payer_name
+    )
+
     db.session.commit()
 
     return jsonify({
@@ -603,6 +645,16 @@ def delete_transaction(transaction_id):
             "message":
             "Kayıt bulunamadı veya yetkiniz yok."
         }), 404
+
+    if transaction.source != "manual":
+        return jsonify({
+            "message": (
+                "Bu kayıt bir borç ödemesinden "
+                "otomatik oluşturuldu; silmek için "
+                "ilgili ödeme kaydını (Aidatlar / "
+                "Ödemeler sayfasından) silin."
+            )
+        }), 400
 
     db.session.delete(
         transaction

@@ -39,6 +39,15 @@ class PreviousPeriodDebtPayment(db.Model):
         nullable=True
     )
 
+    # Bu ödeme için işletme defterinde otomatik oluşturulan
+    # gelir kaydı (Transaction). Bu ödeme silinirse, bağlı
+    # Transaction kaydı da birlikte silinir.
+    transaction_id = db.Column(
+        db.Integer,
+        db.ForeignKey("transactions.id"),
+        nullable=True
+    )
+
     created_at = db.Column(
         db.DateTime,
         default=datetime.utcnow,
@@ -48,4 +57,8 @@ class PreviousPeriodDebtPayment(db.Model):
     debt = db.relationship(
         "PreviousPeriodDebt",
         back_populates="payments"
+    )
+
+    transaction = db.relationship(
+        "Transaction"
     )
