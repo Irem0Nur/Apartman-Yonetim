@@ -5,7 +5,14 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from extensions import db
-from models import Payment, Due, Unit, Apartment
+from models import (
+    Payment,
+    Due,
+    Unit,
+    Apartment,
+    PreviousPeriodDebt,
+    PreviousPeriodDebtPayment,
+)
 from routes.dues import calculate_own_remaining, get_prior_unpaid_dues
 
 
@@ -193,8 +200,54 @@ def yearly_payment_report(apartment_id):
 
         remaining = total_required - total_paid
 
+        # ---------------------------------------------------
+        # ÖNCEKİ DÖNEM BORÇ ÖDEMELERİ
+        #
+        # "Kalan Borç" (remaining) yalnızca aidat tahakkuku ile
+        # aidat tahsilatına göre hesaplanmaya devam eder, çünkü
+        # devreden borcun kendi ayrı bir "Devreden Borç" sütunu
+        # var. Ancak çizelgede o ay/yıl için gerçekte ne kadar
+        # tahsilat yapıldığını görebilmek için, aynı ay içinde
+        # yapılan devreden borç ödemeleri de ilgili ayın hücresine
+        # ve "Ödenen Toplam" sütununa eklenir.
+        # ---------------------------------------------------
+
+        debt_payments = (
+            PreviousPeriodDebtPayment.query
+            .join(
+                PreviousPeriodDebt,
+                PreviousPeriodDebtPayment.debt_id
+                == PreviousPeriodDebt.id
+            )
+            .filter(
+                PreviousPeriodDebt.unit_id == unit.id,
+                db.extract(
+                    "year",
+                    PreviousPeriodDebtPayment.payment_date
+                ) == year,
+            )
+            .all()
+        )
+
+        debt_paid_total = Decimal("0.00")
+
+        for debt_payment in debt_payments:
+            debt_payment_amount = Decimal(
+                str(debt_payment.amount)
+            )
+
+            debt_paid_total += debt_payment_amount
+
+            month_key = str(
+                debt_payment.payment_date.month
+            )
+
+            monthly_payments[month_key] += debt_payment_amount
+
+        total_paid_with_debt = total_paid + debt_paid_total
+
         general_required += total_required
-        general_paid += total_paid
+        general_paid += total_paid_with_debt
         general_remaining += remaining
 
         report.append({
@@ -214,7 +267,7 @@ def yearly_payment_report(apartment_id):
             },
 
             "total_required": float(total_required),
-            "total_paid": float(total_paid),
+            "total_paid": float(total_paid_with_debt),
             "remaining": float(remaining),
         })
 
