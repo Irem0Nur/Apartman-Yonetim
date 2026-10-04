@@ -103,6 +103,62 @@ def get_unit_label(unit):
     return f"Daire {unit.unit_number}"
 
 
+def create_transaction_for_debt_payment(payment, debt, payment_method=None):
+    """
+    Bir önceki dönem borç ödemesi için işletme defterine
+    (ve dolayısıyla Kasa'ya) otomatik bir gelir kaydı
+    (Transaction) oluşturur ve ödemeye bağlar. Hem yeni
+    ödeme eklerken hem de geçmişe dönük (backfill) eski
+    kayıtlar için kullanılır.
+    """
+
+    unit = debt.unit
+
+    people = get_people_for_unit(unit)
+
+    payer_label = (
+        ", ".join(people)
+        if people
+        else "Sakin eklenmedi"
+    )
+
+    description_parts = [
+        get_unit_label(unit),
+        payer_label,
+        "Önceki dönem borç ödemesi",
+    ]
+
+    if debt.period:
+        description_parts.append(
+            f"({debt.period})"
+        )
+
+    transaction = Transaction(
+        apartment_id=unit.apartment_id,
+        transaction_type="income",
+        category="Önceki Dönem Borç Tahsilatı",
+        amount=payment.amount,
+        transaction_date=payment.payment_date,
+        payment_method=(
+            payment_method
+            or payment.payment_method
+        ),
+        description=" - ".join(
+            description_parts
+        ),
+        unit_id=unit.id,
+        payer_name=payer_label,
+        source="previous_debt_payment",
+    )
+
+    db.session.add(transaction)
+    db.session.flush()
+
+    payment.transaction_id = transaction.id
+
+    return transaction
+
+
 def calculate_debt_payment(debt):
     paid_amount = sum(
         (
@@ -666,56 +722,16 @@ def create_debt_payment(debt_id):
 
     db.session.add(payment)
 
-    # --------------------------------------------------
     # Bu ödeme için işletme defterine (ve dolayısıyla
     # Kasa'ya) otomatik bir gelir kaydı düşülür, böylece
     # "Önceki dönem borcunun bir kısmını ödedi" bilgisi
     # Ödemeler / İşletme Defteri / Kasa sayfalarında da
     # görünür.
-    # --------------------------------------------------
-
-    unit = debt.unit
-
-    people = get_people_for_unit(unit)
-
-    payer_label = (
-        ", ".join(people)
-        if people
-        else "Sakin eklenmedi"
+    create_transaction_for_debt_payment(
+        payment,
+        debt,
+        payment_method=data.get("payment_method"),
     )
-
-    description_parts = [
-        get_unit_label(unit),
-        payer_label,
-        "Önceki dönem borç ödemesi",
-    ]
-
-    if debt.period:
-        description_parts.append(
-            f"({debt.period})"
-        )
-
-    transaction = Transaction(
-        apartment_id=unit.apartment_id,
-        transaction_type="income",
-        category="Önceki Dönem Borç Tahsilatı",
-        amount=payment_amount,
-        transaction_date=payment_date,
-        payment_method=data.get(
-            "payment_method"
-        ),
-        description=" - ".join(
-            description_parts
-        ),
-        unit_id=unit.id,
-        payer_name=payer_label,
-        source="previous_debt_payment",
-    )
-
-    db.session.add(transaction)
-    db.session.flush()
-
-    payment.transaction_id = transaction.id
 
     db.session.commit()
 
@@ -885,3 +901,75 @@ def get_apartment_debt_payments(apartment_id):
         result.append(data)
 
     return jsonify(result), 200
+
+
+# --------------------------------------------------
+# GEÇMİŞE DÖNÜK DÜZELTME (BACKFILL)
+#
+# Önceki dönem borç ödemesi özelliği işletme defteri
+# bağlantısı eklenmeden ÖNCE girilmiş ödemeler için,
+# eksik olan otomatik gelir kaydını (Transaction)
+# sonradan oluşturur. Yalnızca giriş yapan kullanıcının
+# kendi apartmanlarına ait, henüz bir Transaction'a
+# bağlanmamış ödemeleri işler. Tekrar çalıştırmak
+# güvenlidir (zaten bağlı olanları atlar).
+# --------------------------------------------------
+
+@previous_period_debts_bp.route(
+    "/backfill-transactions",
+    methods=["POST"]
+)
+@jwt_required()
+def backfill_debt_payment_transactions():
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    payments = (
+        PreviousPeriodDebtPayment.query
+        .join(
+            PreviousPeriodDebt,
+            PreviousPeriodDebtPayment.debt_id
+            == PreviousPeriodDebt.id
+        )
+        .join(
+            Unit,
+            PreviousPeriodDebt.unit_id == Unit.id
+        )
+        .join(
+            Apartment,
+            Unit.apartment_id == Apartment.id
+        )
+        .filter(
+            Apartment.manager_id == user_id,
+            PreviousPeriodDebtPayment.transaction_id.is_(None),
+        )
+        .all()
+    )
+
+    updated = []
+
+    for payment in payments:
+        transaction = create_transaction_for_debt_payment(
+            payment,
+            payment.debt,
+        )
+
+        updated.append({
+            "payment_id": payment.id,
+            "transaction_id": transaction.id,
+            "amount": float(payment.amount),
+            "unit": get_unit_label(payment.debt.unit),
+        })
+
+    db.session.commit()
+
+    return jsonify({
+        "message": (
+            f"{len(updated)} eski ödeme için "
+            "işletme defteri kaydı oluşturuldu."
+        ),
+        "updated_count": len(updated),
+        "updated": updated,
+    }), 200
