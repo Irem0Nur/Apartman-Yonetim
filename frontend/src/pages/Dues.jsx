@@ -2273,12 +2273,10 @@ function Dues() {
 
                     <p className="field-hint">
                       Aidat tutarından fazla
-                      girilebilir; fazlası
-                      {selectedDue.carried_over_amount >
-                      0
-                        ? " önce geçmiş aylardan devreden borca mahsup edilir, kalanı "
-                        : " "}
-                      bu aya işlenir.
+                      girilebilir; girdiğiniz
+                      tutarın tamamı bu aya
+                      işlenir (başka aylara
+                      otomatik bölüştürülmez).
                     </p>
 
                   </div>
