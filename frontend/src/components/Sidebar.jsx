@@ -100,7 +100,7 @@ function Sidebar({ active }) {
           className={menuClass("payments")}
           onClick={() => navigate("/odemeler")}
         >
-          🕒 Ödemeler
+          🕒 Tahsilatlar
         </button>
 
         <button

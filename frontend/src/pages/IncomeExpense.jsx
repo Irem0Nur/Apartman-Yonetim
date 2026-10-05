@@ -751,7 +751,7 @@ function IncomeExpense() {
 
           <p className="finance-note">
             Aidat tahsilatlarının ayrıntıları
-            Ödemeler bölümünden görüntülenir.
+            Tahsilatlar bölümünden görüntülenir.
           </p>
 
 

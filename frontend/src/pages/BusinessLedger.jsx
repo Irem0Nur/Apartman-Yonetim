@@ -438,7 +438,7 @@ function BusinessLedger() {
             💳 Aidatlar
           </button>
 
-          <button className="menu-item">💰 Ödemeler</button>
+          <button className="menu-item">💰 Tahsilatlar</button>
 
           <button className="menu-item">📉 Gelir / Gider</button>
 

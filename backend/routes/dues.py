@@ -430,3 +430,138 @@ def generate_dues():
         "skipped_count":
             skipped_count,
     }), 201
+
+
+@dues_bp.route(
+    "/extra",
+    methods=["POST"]
+)
+@jwt_required()
+def add_extra_due():
+    """
+    Belirli bir daireye, seçilen ay için normal aidata ek
+    olarak bir tutar ekler (örn. özel bir masraf için ek
+    aidat). O ay için zaten bir aidat kaydı varsa tutarı
+    üzerine ekler; yoksa dairenin normal aidat tutarıyla
+    birlikte yeni bir aidat kaydı oluşturur.
+    """
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    data = request.get_json() or {}
+
+    unit_id = data.get("unit_id")
+    year = data.get("year")
+    month = data.get("month")
+    amount = data.get("amount")
+
+    if not unit_id or not year or not month:
+        return jsonify({
+            "message":
+                "Daire, yıl ve ay bilgisi zorunludur."
+        }), 400
+
+    try:
+        year = int(year)
+        month = int(month)
+
+    except (TypeError, ValueError):
+        return jsonify({
+            "message":
+                "Yıl ve ay bilgisi geçersiz."
+        }), 400
+
+    if month < 1 or month > 12:
+        return jsonify({
+            "message":
+                "Ay 1 ile 12 arasında olmalıdır."
+        }), 400
+
+    if amount is None:
+        return jsonify({
+            "message":
+                "Ek aidat tutarı zorunludur."
+        }), 400
+
+    try:
+        extra_amount = Decimal(str(amount))
+
+    except Exception:
+        return jsonify({
+            "message":
+                "Geçerli bir tutar giriniz."
+        }), 400
+
+    if extra_amount <= 0:
+        return jsonify({
+            "message":
+                "Ek aidat tutarı sıfırdan büyük olmalıdır."
+        }), 400
+
+    unit = (
+        Unit.query
+        .join(
+            Apartment,
+            Unit.apartment_id == Apartment.id
+        )
+        .filter(
+            Unit.id == unit_id,
+            Apartment.manager_id == user_id
+        )
+        .first()
+    )
+
+    if not unit:
+        return jsonify({
+            "message":
+                "Daire bulunamadı veya yetkiniz yok."
+        }), 404
+
+    due = Due.query.filter_by(
+        unit_id=unit.id,
+        year=year,
+        month=month
+    ).first()
+
+    if due:
+        due.amount = (
+            Decimal(str(due.amount or 0))
+            + extra_amount
+        )
+
+    else:
+        apartment = unit.apartment
+
+        base_amount = (
+            unit.due_amount
+            if unit.due_amount is not None
+            else apartment.default_due_amount
+        ) or 0
+
+        due = Due(
+            unit_id=unit.id,
+            year=year,
+            month=month,
+            amount=(
+                Decimal(str(base_amount))
+                + extra_amount
+            ),
+            due_date=date(
+                year,
+                month,
+                15
+            )
+        )
+
+        db.session.add(due)
+
+    db.session.commit()
+
+    return jsonify({
+        "message":
+            "Ek aidat başarıyla eklendi.",
+
+        "due": due_to_dict(due),
+    }), 201

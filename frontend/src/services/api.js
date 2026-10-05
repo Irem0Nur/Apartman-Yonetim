@@ -884,6 +884,51 @@ export async function generateDues(
 }
 
 
+export async function addExtraDue(
+  token,
+  {
+    unit_id,
+    year,
+    month,
+    amount,
+  }
+) {
+  const response = await fetch(
+    `${API_URL}/dues/extra`,
+    {
+      method: "POST",
+
+      headers: {
+        "Content-Type":
+          "application/json",
+
+        Authorization:
+          `Bearer ${token}`,
+      },
+
+      body: JSON.stringify({
+        unit_id,
+        year,
+        month,
+        amount,
+      }),
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Ek aidat eklenemedi"
+    );
+  }
+
+  return data;
+}
+
+
 // =========================================================
 // PAYMENTS
 // =========================================================
