@@ -40,7 +40,18 @@ function Sidebar({ active }) {
   }
 
   return (
-    <aside className="sidebar">
+    <>
+      <header className="app-topbar">
+        <div className="app-topbar-logo-icon">
+          AY
+        </div>
+
+        <span className="app-topbar-title">
+          ApartmanYönet
+        </span>
+      </header>
+
+      <aside className="sidebar">
       <div className="sidebar-logo">
         <div className="sidebar-logo-icon">
           AY
@@ -186,6 +197,7 @@ function Sidebar({ active }) {
       </button>
 
     </aside>
+    </>
   );
 }
 
