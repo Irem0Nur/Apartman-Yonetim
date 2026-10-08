@@ -49,6 +49,7 @@ function Payments() {
       required: 0,
       paid: 0,
       remaining: 0,
+      debt_paid: 0,
     },
   });
 
@@ -843,6 +844,12 @@ function Payments() {
                       </th>
 
                       <th>
+                        Ödenen
+                        <br />
+                        Devreden Borç
+                      </th>
+
+                      <th>
                         Kalan
                         <br />
                         Borç
@@ -877,7 +884,7 @@ function Payments() {
                       <tr>
 
                         <td
-                          colSpan="20"
+                          colSpan="21"
                           className="empty-table-cell"
                         >
                           Bu yıl için
@@ -977,6 +984,15 @@ function Payments() {
 
                               {formatMoney(
                                 row.total_paid
+                              )}
+
+                            </td>
+
+
+                            <td className="money-total paid-total">
+
+                              {formatMoney(
+                                row.debt_paid_in_period
                               )}
 
                             </td>
@@ -1091,9 +1107,21 @@ function Payments() {
 
                         <td>
                           {formatMoney(
+                            Object.values(
+                              monthlyCollectedTotals
+                            ).reduce(
+                              (sum, value) =>
+                                sum + Number(value || 0),
+                              0
+                            )
+                          )}
+                        </td>
+
+                        <td>
+                          {formatMoney(
                             yearlyReport
                               ?.totals
-                              ?.paid
+                              ?.debt_paid
                           )}
                         </td>
 

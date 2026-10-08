@@ -160,6 +160,7 @@ def yearly_payment_report(apartment_id):
     general_required = Decimal("0.00")
     general_paid = Decimal("0.00")
     general_remaining = Decimal("0.00")
+    general_debt_paid = Decimal("0.00")
 
     for unit in units:
         monthly_payments = {
@@ -202,13 +203,12 @@ def yearly_payment_report(apartment_id):
         # ---------------------------------------------------
         # ÖNCEKİ DÖNEM BORÇ ÖDEMELERİ
         #
-        # "Kalan Borç" (remaining) yalnızca aidat tahakkuku ile
-        # aidat tahsilatına göre hesaplanmaya devam eder, çünkü
-        # devreden borcun kendi ayrı bir "Devreden Borç" sütunu
-        # var. Ancak çizelgede o ay/yıl için gerçekte ne kadar
-        # tahsilat yapıldığını görebilmek için, aynı ay içinde
-        # yapılan devreden borç ödemeleri de ilgili ayın hücresine
-        # ve "Ödenen Toplam" sütununa eklenir.
+        # Aidat tahsilatı ile devreden borç ödemesi birbirine
+        # karıştırılmaz: aylık hücreler ve "Ödenen Toplam" yalnızca
+        # aidatı gösterir. Seçilen yıl içinde yapılan devreden borç
+        # ödemelerinin toplamı ayrı bir "Ödenen Devreden Borç"
+        # sütununda gösterilir, böylece hangi tutarın aidat hangi
+        # tutarın eski borç tahsilatı olduğu net biçimde ayrışır.
         # ---------------------------------------------------
 
         debt_payments = (
@@ -228,26 +228,18 @@ def yearly_payment_report(apartment_id):
             .all()
         )
 
-        debt_paid_total = Decimal("0.00")
-
-        for debt_payment in debt_payments:
-            debt_payment_amount = Decimal(
-                str(debt_payment.amount)
-            )
-
-            debt_paid_total += debt_payment_amount
-
-            month_key = str(
-                debt_payment.payment_date.month
-            )
-
-            monthly_payments[month_key] += debt_payment_amount
-
-        total_paid_with_debt = total_paid + debt_paid_total
+        debt_paid_total = sum(
+            (
+                Decimal(str(debt_payment.amount))
+                for debt_payment in debt_payments
+            ),
+            Decimal("0.00")
+        )
 
         general_required += total_required
-        general_paid += total_paid_with_debt
+        general_paid += total_paid + debt_paid_total
         general_remaining += remaining
+        general_debt_paid += debt_paid_total
 
         report.append({
             "unit_id": unit.id,
@@ -266,7 +258,8 @@ def yearly_payment_report(apartment_id):
             },
 
             "total_required": float(total_required),
-            "total_paid": float(total_paid_with_debt),
+            "total_paid": float(total_paid),
+            "debt_paid_in_period": float(debt_paid_total),
             "remaining": float(remaining),
         })
 
@@ -284,6 +277,7 @@ def yearly_payment_report(apartment_id):
             "required": float(general_required),
             "paid": float(general_paid),
             "remaining": float(general_remaining),
+            "debt_paid": float(general_debt_paid),
         }
     }), 200
 
