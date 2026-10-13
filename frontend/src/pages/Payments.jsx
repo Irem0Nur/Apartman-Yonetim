@@ -838,33 +838,21 @@ function Payments() {
                       </th>
 
                       <th>
-                        Ödenen
-                        <br />
-                        Toplam
-                      </th>
-
-                      <th>
-                        Ödenen
-                        <br />
-                        Devreden Borç
-                      </th>
-
-                      <th>
-                        Kalan
-                        <br />
-                        Borç
-                      </th>
-
-                      <th>
                         Devreden
                         <br />
                         Borç
                       </th>
 
                       <th>
-                        Genel
+                        Ödenen
                         <br />
                         Toplam
+                      </th>
+
+                      <th>
+                        Kalan
+                        <br />
+                        Borç
                       </th>
 
                       <th className="no-print">
@@ -884,7 +872,7 @@ function Payments() {
                       <tr>
 
                         <td
-                          colSpan="21"
+                          colSpan="19"
                           className="empty-table-cell"
                         >
                           Bu yıl için
@@ -980,41 +968,6 @@ function Payments() {
                             </td>
 
 
-                            <td className="money-total paid-total">
-
-                              {formatMoney(
-                                row.total_paid
-                              )}
-
-                            </td>
-
-
-                            <td className="money-total paid-total">
-
-                              {formatMoney(
-                                row.debt_paid_in_period
-                              )}
-
-                            </td>
-
-
-                            <td
-                              className={
-                                Number(
-                                  row.remaining
-                                ) > 0
-                                  ? "money-total remaining-total"
-                                  : "money-total fully-paid-total"
-                              }
-                            >
-
-                              {formatMoney(
-                                row.remaining
-                              )}
-
-                            </td>
-
-
                             <td
                               className={
                                 carriedRemaining > 0
@@ -1025,6 +978,16 @@ function Payments() {
 
                               {formatMoney(
                                 carriedRemaining
+                              )}
+
+                            </td>
+
+
+                            <td className="money-total paid-total">
+
+                              {formatMoney(
+                                Number(row.total_paid || 0) +
+                                  Number(row.debt_paid_in_period || 0)
                               )}
 
                             </td>
@@ -1107,35 +1070,24 @@ function Payments() {
 
                         <td>
                           {formatMoney(
+                            previousDebtsTotals.remaining
+                          )}
+                        </td>
+
+                        <td>
+                          {formatMoney(
                             Object.values(
                               monthlyCollectedTotals
                             ).reduce(
                               (sum, value) =>
                                 sum + Number(value || 0),
                               0
-                            )
-                          )}
-                        </td>
-
-                        <td>
-                          {formatMoney(
-                            yearlyReport
-                              ?.totals
-                              ?.debt_paid
-                          )}
-                        </td>
-
-                        <td>
-                          {formatMoney(
-                            yearlyReport
-                              ?.totals
-                              ?.remaining
-                          )}
-                        </td>
-
-                        <td>
-                          {formatMoney(
-                            previousDebtsTotals.remaining
+                            ) +
+                              Number(
+                                yearlyReport
+                                  ?.totals
+                                  ?.debt_paid || 0
+                              )
                           )}
                         </td>
 
