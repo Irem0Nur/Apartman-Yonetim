@@ -331,6 +331,14 @@ function Payments() {
     );
   }
 
+  function getUnitDebtTotal(unitId) {
+    return getUnitDebts(unitId).reduce(
+      (total, debt) =>
+        total + Number(debt.amount || 0),
+      0
+    );
+  }
+
 
   // ---------------------------------------------------
   // EK AİDAT EKLEME
@@ -892,6 +900,11 @@ function Payments() {
                               row.unit_id
                             );
 
+                          const carriedTotal =
+                            getUnitDebtTotal(
+                              row.unit_id
+                            );
+
                           const rowOverallRemaining =
                             Number(row.remaining || 0) +
                             carriedRemaining;
@@ -968,16 +981,10 @@ function Payments() {
                             </td>
 
 
-                            <td
-                              className={
-                                carriedRemaining > 0
-                                  ? "money-total remaining-total"
-                                  : "money-total fully-paid-total"
-                              }
-                            >
+                            <td className="money-total required-total">
 
                               {formatMoney(
-                                carriedRemaining
+                                carriedTotal
                               )}
 
                             </td>
@@ -1070,7 +1077,7 @@ function Payments() {
 
                         <td>
                           {formatMoney(
-                            previousDebtsTotals.remaining
+                            previousDebtsTotals.amount
                           )}
                         </td>
 
