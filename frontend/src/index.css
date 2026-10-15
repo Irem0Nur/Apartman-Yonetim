@@ -1983,7 +1983,7 @@ input {
 
   @page {
     size: A4 landscape;
-    margin: 8mm;
+    margin: 5mm;
   }
 
   body {
@@ -2013,6 +2013,20 @@ input {
 
   .print-report-header {
     display: block;
+
+    margin-bottom: 6px;
+  }
+
+  .print-report-header h2 {
+    font-size: 15px;
+  }
+
+  .print-report-header h3 {
+    font-size: 12px;
+  }
+
+  .print-report-header p {
+    font-size: 9px;
   }
 
   .yearly-summary {
@@ -2021,13 +2035,13 @@ input {
     grid-template-columns:
       repeat(3, 1fr);
 
-    gap: 8px;
+    gap: 6px;
 
-    margin-bottom: 12px;
+    margin-bottom: 6px;
   }
 
   .yearly-summary-card {
-    padding: 8px;
+    padding: 4px 5px;
 
     border: 1px solid #888;
 
@@ -2056,13 +2070,14 @@ input {
     min-width: 0;
 
     font-size: 7px;
+    line-height: 1.1;
 
     table-layout: auto;
   }
 
   .yearly-payment-table th,
   .yearly-payment-table td {
-    padding: 4px 2px;
+    padding: 2px;
 
     border:
       1px solid #777;
