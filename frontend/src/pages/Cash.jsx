@@ -369,7 +369,8 @@ function Cash() {
             </span>
 
             <p>
-              Tüm zamanlardaki tahsilat,
+              Açılış bakiyesi ile tüm
+              zamanlardaki tahsilat,
               diğer gelir ve giderlerin
               toplam sonucu
             </p>

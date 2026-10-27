@@ -214,7 +214,7 @@
 
 .ledger-summary {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 18px;
   margin-bottom: 20px;
 }
@@ -262,6 +262,14 @@
 
 .ledger-stat.net strong {
   color: var(--primary-dark);
+}
+
+.ledger-stat.balance {
+  border-left-color: #0f172a;
+}
+
+.ledger-stat.balance strong {
+  color: #0f172a;
 }
 
 .ledger-mobile-tabs {

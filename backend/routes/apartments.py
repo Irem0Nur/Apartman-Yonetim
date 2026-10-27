@@ -32,6 +32,9 @@ def get_apartments():
             "default_due_amount": float(
                 apartment.default_due_amount or 0
             ),
+            "opening_cash_balance": float(
+                apartment.opening_cash_balance or 0
+            ),
         }
         for apartment in apartments
     ]), 200
@@ -58,6 +61,9 @@ def create_apartment():
         default_due_amount = float(
             data.get("default_due_amount") or 0
         )
+        opening_cash_balance = float(
+            data.get("opening_cash_balance") or 0
+        )
     except (TypeError, ValueError):
         return jsonify({
             "message": "Sayısal alanları kontrol edin"
@@ -80,6 +86,7 @@ def create_apartment():
         floor_count=floor_count or None,
         unit_count=unit_count or None,
         default_due_amount=default_due_amount,
+        opening_cash_balance=opening_cash_balance,
         manager_id=user_id
     )
 
@@ -97,6 +104,9 @@ def create_apartment():
             "unit_count": apartment.unit_count,
             "default_due_amount": float(
                 apartment.default_due_amount or 0
+            ),
+            "opening_cash_balance": float(
+                apartment.opening_cash_balance or 0
             )
         }
     }), 201
@@ -164,6 +174,13 @@ def update_apartment(apartment_id):
             )
         )
 
+        opening_cash_balance = float(
+            data.get(
+                "opening_cash_balance",
+                apartment.opening_cash_balance or 0
+            )
+        )
+
     except (TypeError, ValueError):
         return jsonify({
             "message": "Sayısal alanları kontrol edin"
@@ -195,6 +212,9 @@ def update_apartment(apartment_id):
     apartment.default_due_amount = (
         default_due_amount
     )
+    apartment.opening_cash_balance = (
+        opening_cash_balance
+    )
 
     db.session.commit()
 
@@ -209,6 +229,9 @@ def update_apartment(apartment_id):
             "unit_count": apartment.unit_count,
             "default_due_amount": float(
                 apartment.default_due_amount or 0
+            ),
+            "opening_cash_balance": float(
+                apartment.opening_cash_balance or 0
             )
         }
     }), 200

@@ -138,8 +138,13 @@ def get_cash(apartment_id):
         Decimal("0.00")
     )
 
+    opening_cash_balance = decimal_value(
+        apartment.opening_cash_balance
+    )
+
     cash_balance = (
-        all_dues_income
+        opening_cash_balance
+        + all_dues_income
         + all_other_income
         - all_expense
     )
@@ -306,6 +311,10 @@ def get_cash(apartment_id):
 
         "cash_balance": float(
             cash_balance
+        ),
+
+        "opening_cash_balance": float(
+            opening_cash_balance
         ),
 
         "period": {

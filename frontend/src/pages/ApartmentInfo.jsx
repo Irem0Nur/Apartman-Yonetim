@@ -80,6 +80,7 @@ function ApartmentInfo() {
     floor_count: 0,
     unit_count: 0,
     default_due_amount: 0,
+    opening_cash_balance: 0,
   });
 
 
@@ -187,6 +188,10 @@ function ApartmentInfo() {
 
           default_due_amount:
             selected.default_due_amount ??
+            0,
+
+          opening_cash_balance:
+            selected.opening_cash_balance ??
             0,
         });
 
@@ -461,6 +466,10 @@ function ApartmentInfo() {
       default_due_amount:
         apartment.default_due_amount ??
         0,
+
+      opening_cash_balance:
+        apartment.opening_cash_balance ??
+        0,
     });
 
     setEditing(
@@ -498,6 +507,10 @@ function ApartmentInfo() {
 
       default_due_amount:
         apartment.default_due_amount ??
+        0,
+
+      opening_cash_balance:
+        apartment.opening_cash_balance ??
         0,
     });
   }
@@ -577,6 +590,11 @@ function ApartmentInfo() {
           Number(
             form.default_due_amount
           ),
+
+        opening_cash_balance:
+          Number(
+            form.opening_cash_balance
+          ),
       };
 
       const result =
@@ -613,6 +631,10 @@ function ApartmentInfo() {
         default_due_amount:
           result.apartment
             .default_due_amount ?? 0,
+
+        opening_cash_balance:
+          result.apartment
+            .opening_cash_balance ?? 0,
       });
 
       setEditing(
@@ -800,6 +822,24 @@ function ApartmentInfo() {
 
               </div>
 
+
+              <div className="apartment-info-item">
+
+                <span>
+                  Açılış Kasa Bakiyesi
+                </span>
+
+                <strong>
+                  {formatMoney(
+                    apartment
+                      .opening_cash_balance
+                  )}
+                  {" "}
+                  TL
+                </strong>
+
+              </div>
+
             </div>
 
           </section>
@@ -942,6 +982,36 @@ function ApartmentInfo() {
                       handleChange
                     }
                   />
+
+                </div>
+
+
+                <div className="form-group">
+
+                  <label>
+                    Açılış Kasa Bakiyesi
+                  </label>
+
+                  <input
+                    type="number"
+                    name="opening_cash_balance"
+                    step="0.01"
+                    value={
+                      form.opening_cash_balance
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+
+                  <p className="field-hint">
+                    Uygulamayı kullanmaya
+                    başlamadan önce kasada
+                    bulunan tutar. Kasa ve
+                    İşletme Defteri bu
+                    tutarın üzerine eklenerek
+                    hesaplanır.
+                  </p>
 
                 </div>
 

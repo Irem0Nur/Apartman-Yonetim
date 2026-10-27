@@ -37,6 +37,14 @@ class Apartment(db.Model):
         default=0
     )
 
+    # Uygulamayı kullanmaya başlamadan önce kasada zaten
+    # bulunan bakiye. Kasa ve İşletme Defteri hesaplamaları
+    # bu tutarın üzerine eklenerek yapılır.
+    opening_cash_balance = db.Column(
+        db.Numeric(12, 2),
+        default=0
+    )
+
     manager_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),

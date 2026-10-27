@@ -6,6 +6,7 @@ import {
   getApartments,
   getTransactions,
   getPayments,
+  getCash,
   createTransaction,
   updateTransaction,
   deleteTransaction,
@@ -57,6 +58,7 @@ function BusinessLedger() {
   const [apartment, setApartment] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [cashBalance, setCashBalance] = useState(0);
 
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -89,7 +91,7 @@ function BusinessLedger() {
       return;
     }
 
-    const [transactionData, paymentData] = await Promise.all([
+    const [transactionData, paymentData, cashData] = await Promise.all([
       getTransactions(
         token,
         selectedApartment.id,
@@ -103,10 +105,18 @@ function BusinessLedger() {
         selectedYear,
         selectedMonth
       ),
+
+      getCash(
+        token,
+        selectedApartment.id,
+        selectedYear,
+        selectedMonth
+      ),
     ]);
 
     setTransactions(transactionData || []);
     setPayments(paymentData || []);
+    setCashBalance(cashData?.cash_balance || 0);
   }
 
 
@@ -547,6 +557,11 @@ function BusinessLedger() {
           <div className="ledger-stat net">
             <span>Net Kasa</span>
             <strong>{formatMoney(netCash)} TL</strong>
+          </div>
+
+          <div className="ledger-stat balance">
+            <span>Güncel Kasa Bakiyesi</span>
+            <strong>{formatMoney(cashBalance)} TL</strong>
           </div>
 
         </section>
