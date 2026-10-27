@@ -162,51 +162,6 @@ def yearly_payment_report(apartment_id):
     general_remaining = Decimal("0.00")
     general_debt_paid = Decimal("0.00")
 
-    # ---------------------------------------------------
-    # AYLIK DEVREDEN BORÇ TAHSİLATLARI
-    #
-    # "GENEL TOPLAM" satırındaki aylık sütunlar, o ay
-    # gerçekten kasaya giren toplam parayı (aidat +
-    # devreden borç tahsilatı) yansıtabilsin diye, devreden
-    # borç ödemeleri de yapıldıkları aya göre toplanır.
-    # ---------------------------------------------------
-
-    monthly_debt_paid = {
-        str(month): Decimal("0.00")
-        for month in range(1, 13)
-    }
-
-    apartment_debt_payments = (
-        PreviousPeriodDebtPayment.query
-        .join(
-            PreviousPeriodDebt,
-            PreviousPeriodDebtPayment.debt_id
-            == PreviousPeriodDebt.id
-        )
-        .join(
-            Unit,
-            PreviousPeriodDebt.unit_id == Unit.id
-        )
-        .filter(
-            Unit.apartment_id == apartment_id,
-            db.extract(
-                "year",
-                PreviousPeriodDebtPayment.payment_date
-            ) == year,
-        )
-        .all()
-    )
-
-    for debt_payment in apartment_debt_payments:
-        if not debt_payment.payment_date:
-            continue
-
-        month_key = str(debt_payment.payment_date.month)
-
-        monthly_debt_paid[month_key] += Decimal(
-            str(debt_payment.amount)
-        )
-
     for unit in units:
         monthly_payments = {
             str(month): Decimal("0.00")
@@ -248,12 +203,13 @@ def yearly_payment_report(apartment_id):
         # ---------------------------------------------------
         # ÖNCEKİ DÖNEM BORÇ ÖDEMELERİ
         #
-        # Aidat tahsilatı ile devreden borç ödemesi birbirine
-        # karıştırılmaz: aylık hücreler ve "Ödenen Toplam" yalnızca
-        # aidatı gösterir. Seçilen yıl içinde yapılan devreden borç
-        # ödemelerinin toplamı ayrı bir "Ödenen Devreden Borç"
-        # sütununda gösterilir, böylece hangi tutarın aidat hangi
-        # tutarın eski borç tahsilatı olduğu net biçimde ayrışır.
+        # Devreden borç ödemeleri, yapıldıkları ayın aylık
+        # hücresine de aidatla birlikte eklenir; böylece aylık
+        # sütunlar o ay o daireden gerçekten tahsil edilen
+        # toplam tutarı gösterir. "Ödenmesi Gereken" yalnızca
+        # aidatı, "Devreden Borç" sütunu ise toplam devreden borç
+        # tutarını ayrıca gösterir — sadece hangi kısmın aidat
+        # hangi kısmın eski borç olduğu ayrı sütunlarda görünür.
         # ---------------------------------------------------
 
         debt_payments = (
@@ -273,13 +229,23 @@ def yearly_payment_report(apartment_id):
             .all()
         )
 
-        debt_paid_total = sum(
-            (
-                Decimal(str(debt_payment.amount))
-                for debt_payment in debt_payments
-            ),
-            Decimal("0.00")
-        )
+        debt_paid_total = Decimal("0.00")
+
+        for debt_payment in debt_payments:
+            debt_payment_amount = Decimal(
+                str(debt_payment.amount)
+            )
+
+            debt_paid_total += debt_payment_amount
+
+            if debt_payment.payment_date:
+                month_key = str(
+                    debt_payment.payment_date.month
+                )
+
+                monthly_payments[month_key] += (
+                    debt_payment_amount
+                )
 
         general_required += total_required
         general_paid += total_paid + debt_paid_total
@@ -323,10 +289,6 @@ def yearly_payment_report(apartment_id):
             "paid": float(general_paid),
             "remaining": float(general_remaining),
             "debt_paid": float(general_debt_paid),
-            "monthly_debt_paid": {
-                key: float(value)
-                for key, value in monthly_debt_paid.items()
-            },
         }
     }), 200
 
