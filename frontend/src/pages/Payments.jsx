@@ -1058,9 +1058,18 @@ function Payments() {
                               className="money-total paid-total"
                             >
                               {formatTableMoney(
-                                monthlyCollectedTotals[
-                                  item.value
-                                ]
+                                Number(
+                                  monthlyCollectedTotals[
+                                    item.value
+                                  ] || 0
+                                ) +
+                                  Number(
+                                    yearlyReport
+                                      ?.totals
+                                      ?.monthly_debt_paid?.[
+                                      item.value
+                                    ] || 0
+                                  )
                               )}
                             </td>
 
