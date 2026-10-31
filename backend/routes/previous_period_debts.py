@@ -558,6 +558,22 @@ def delete_previous_period_debt(debt_id):
                 "Borç kaydı bulunamadı veya yetkiniz yok."
         }), 404
 
+    # Bu borca ait ödemelerin işletme defterine (ve Kasa'ya)
+    # otomatik düşülmüş Transaction kayıtları varsa, borç
+    # silinirken bunlar da birlikte silinmeli. Aksi halde
+    # "payments" ilişkisi cascade ile silinirken Transaction
+    # kayıtları sahipsiz (yetim) kalır ve Kasa / İşletme
+    # Defteri'nde gerçek bir borç/ödeme kaydı olmadan
+    # görünmeye devam eder.
+    for payment in debt.payments:
+        if payment.transaction_id:
+            linked_transaction = Transaction.query.get(
+                payment.transaction_id
+            )
+
+            if linked_transaction:
+                db.session.delete(linked_transaction)
+
     db.session.delete(debt)
     db.session.commit()
 
@@ -972,4 +988,119 @@ def backfill_debt_payment_transactions():
         ),
         "updated_count": len(updated),
         "updated": updated,
+    }), 200
+
+
+# --------------------------------------------------
+# YETİM (SAHİPSİZ) İŞLETME DEFTERİ KAYITLARINI TEMİZLE
+#
+# Bir "Önceki Dönem Borcu" tamamen silindiğinde, bu borca
+# bağlı ödemeler için önceden oluşturulmuş Transaction
+# (işletme defteri / Kasa) kayıtları artık hiçbir ödemeye
+# bağlı değildir ama veritabanında kalmaya devam eder; bu da
+# Kasa ve İşletme Defteri'nde gerçekte var olmayan bir
+# daireye/ödemeye ait gelir görünmesine yol açar. Bu uç nokta,
+# giriş yapan kullanıcının apartmanlarına ait, artık hiçbir
+# "Önceki Dönem Borcu Ödemesi"ne bağlı olmayan
+# source="previous_debt_payment" Transaction kayıtlarını bulup
+# siler. Tekrar çalıştırmak güvenlidir (temizlenecek bir şey
+# kalmayınca hiçbir şey silmez).
+# --------------------------------------------------
+
+@previous_period_debts_bp.route(
+    "/cleanup-orphaned-transactions",
+    methods=["POST"]
+)
+@jwt_required()
+def cleanup_orphaned_debt_transactions():
+
+    user_id = int(
+        get_jwt_identity()
+    )
+
+    apartment_ids = [
+        apartment.id
+        for apartment in Apartment.query.filter_by(
+            manager_id=user_id
+        ).all()
+    ]
+
+    if not apartment_ids:
+        return jsonify({
+            "message": "Apartman bulunamadı.",
+            "removed_count": 0,
+            "removed_total": 0.0,
+            "removed": [],
+        }), 200
+
+    referenced_transaction_ids = {
+        row[0]
+        for row in (
+            db.session.query(
+                PreviousPeriodDebtPayment.transaction_id
+            )
+            .filter(
+                PreviousPeriodDebtPayment.transaction_id
+                .isnot(None)
+            )
+            .all()
+        )
+    }
+
+    candidate_transactions = (
+        Transaction.query
+        .filter(
+            Transaction.apartment_id.in_(apartment_ids),
+            Transaction.source == "previous_debt_payment",
+        )
+        .all()
+    )
+
+    removed = []
+    removed_total = Decimal("0.00")
+
+    for transaction in candidate_transactions:
+        if transaction.id in referenced_transaction_ids:
+            continue
+
+        unit = (
+            Unit.query.get(transaction.unit_id)
+            if transaction.unit_id
+            else None
+        )
+
+        removed.append({
+            "id": transaction.id,
+            "amount": float(transaction.amount),
+            "date": (
+                transaction.transaction_date.isoformat()
+                if transaction.transaction_date
+                else None
+            ),
+            "description": transaction.description,
+            "unit": (
+                get_unit_label(unit)
+                if unit
+                else None
+            ),
+        })
+
+        removed_total += Decimal(
+            str(transaction.amount)
+        )
+
+        db.session.delete(transaction)
+
+    db.session.commit()
+
+    return jsonify({
+        "message": (
+            f"{len(removed)} yetim kayıt silindi "
+            f"(toplam {float(removed_total):.2f} TL)."
+            if removed
+            else "Yetim kayıt bulunamadı."
+        ),
+        "removed_count": len(removed),
+        "removed_total": float(removed_total),
+        "removed": removed,
     }), 200

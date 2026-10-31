@@ -16,6 +16,7 @@ import {
   updateName,
   changeEmail,
   changePassword,
+  cleanupOrphanedDebtTransactions,
 } from "../services/api";
 
 
@@ -373,6 +374,59 @@ function ApartmentInfo() {
       ...prev,
       [name]: value,
     }));
+  }
+
+
+  // -------------------------------------------------------
+  // BAKIM: silinmiş "önceki dönem borcu" kayıtlarından geriye
+  // kalmış, hiçbir ödemeye bağlı olmayan Kasa/İşletme Defteri
+  // kayıtlarını (yetim kayıtlar) temizle.
+  // -------------------------------------------------------
+
+  const [
+    cleanupLoading,
+    setCleanupLoading
+  ] = useState(false);
+
+  const [
+    cleanupError,
+    setCleanupError
+  ] = useState("");
+
+  const [
+    cleanupResult,
+    setCleanupResult
+  ] = useState(null);
+
+
+  async function handleCleanupOrphans() {
+    const approved = window.confirm(
+      "Silinmiş önceki dönem borçlarından kalan, hiçbir " +
+      "ödemeye bağlı olmayan Kasa/İşletme Defteri gelir " +
+      "kayıtları aranıp silinecek. Devam edilsin mi?"
+    );
+
+    if (!approved) {
+      return;
+    }
+
+    try {
+      setCleanupLoading(true);
+      setCleanupError("");
+      setCleanupResult(null);
+
+      const result = await cleanupOrphanedDebtTransactions(
+        token
+      );
+
+      setCleanupResult(result);
+
+    } catch (err) {
+      setCleanupError(err.message);
+
+    } finally {
+      setCleanupLoading(false);
+    }
   }
 
 
@@ -1300,6 +1354,63 @@ function ApartmentInfo() {
             </form>
 
           </div>
+
+        </section>
+
+
+        <section className="panel">
+
+          <h2>
+            Bakım
+          </h2>
+
+          <p className="subtitle">
+            Silinmiş "önceki dönem borcu" kayıtlarından geriye
+            kalmış, hiçbir ödemeye bağlı olmayan Kasa / İşletme
+            Defteri gelir kayıtlarını (yetim kayıtlar) bulup
+            temizler. Normal kullanımda bu kayıtlar oluşmaz;
+            yalnızca Kasa'da açıklanamayan bir fazlalık
+            gördüyseniz kullanın.
+          </p>
+
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={handleCleanupOrphans}
+            disabled={cleanupLoading}
+          >
+            {cleanupLoading
+              ? "Taranıyor..."
+              : "Yetim Kayıtları Tara ve Temizle"}
+          </button>
+
+          {cleanupError && (
+            <div className="error-message">
+              {cleanupError}
+            </div>
+          )}
+
+          {cleanupResult && (
+            <div className="success-message">
+              {cleanupResult.message}
+
+              {cleanupResult.removed_count > 0 && (
+                <ul>
+                  {cleanupResult.removed.map((item) => (
+                    <li key={item.id}>
+                      {item.date || "-"}
+                      {" — "}
+                      {item.unit ? `${item.unit} — ` : ""}
+                      {formatMoney(item.amount)} TL
+                      {item.description
+                        ? ` (${item.description})`
+                        : ""}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
 
         </section>
 

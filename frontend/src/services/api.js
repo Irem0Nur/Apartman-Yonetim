@@ -1966,3 +1966,32 @@ export async function deletePreviousPeriodDebtPayment(
 
   return data;
 }
+
+
+export async function cleanupOrphanedDebtTransactions(
+  token
+) {
+  const response = await fetch(
+    `${API_URL}/previous-period-debts/cleanup-orphaned-transactions`,
+    {
+      method: "POST",
+
+      headers: {
+        Authorization:
+          `Bearer ${token}`,
+      },
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+      "Yetim kayıtlar temizlenemedi"
+    );
+  }
+
+  return data;
+}
