@@ -106,10 +106,10 @@
 .kd-c-sira    { width: 7%; }
 .kd-c-tarih   { width: 12%; }
 .kd-c-belge   { width: 9%; }
-.kd-c-kisi    { width: 15%; }
+.kd-c-kisi    { width: 19%; }
 .kd-c-odeme   { width: 11%; }
 .kd-c-tutar   { width: 14%; }
-.kd-c-islem   { width: 15%; }
+.kd-c-islem   { width: 11%; }
 
 .kd-ort { text-align: center; }
 .kd-sag { text-align: right; font-variant-numeric: tabular-nums; }
@@ -119,6 +119,28 @@
 .kd-kisi-hucre {
   font-size: 0.78rem;
   color: #374151;
+}
+
+.kd-tablo td.kd-kisi-hucre {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  height: auto;
+  line-height: 1.3;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+/* Açıklama hücresi uzun metinlerde kesilmesin (üç nokta ile
+   gizlenmesin) — özellikle yazdırırken tam olarak okunabilsin. */
+.kd-tablo td.kd-aciklama-hucre {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  height: auto;
+  line-height: 1.3;
+  padding-top: 4px;
+  padding-bottom: 4px;
 }
 
 .kd-tablo tfoot td {

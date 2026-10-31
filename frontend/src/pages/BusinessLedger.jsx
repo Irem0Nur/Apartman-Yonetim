@@ -330,7 +330,12 @@ function BusinessLedger() {
       .map((item) => ({
         ...item,
         source: item.source || "manual",
-        payer: item.payer_name || item.unit_label || "",
+        // Daire/blok numarası (varsa) ile ödeyen kişinin adı
+        // birlikte gösterilir, böylece parayı kimin yatırdığı
+        // daire numarasıyla birlikte görünür.
+        payer: [item.unit_label, item.payer_name]
+          .filter(Boolean)
+          .join(" — "),
       }));
 
     const automaticIncome = payments.map((payment) => {
@@ -838,6 +843,13 @@ function LedgerTable({
     0
   );
 
+  // Kişi/Daire sütunu yalnızca Gelir tablosunda gösterilir —
+  // Gider kayıtlarında bu alan hiçbir zaman dolmadığı için
+  // kaldırılıp yerine Açıklama'ya daha fazla yer verilir.
+  const showKisi = type === "income";
+
+  const baseColumnCount = showKisi ? 6 : 5;
+
   return (
     <section
       className={`kd-sayfa kd-${type} ${
@@ -875,11 +887,13 @@ function LedgerTable({
               No
             </th>
             <th className="kd-c-aciklama">Açıklama</th>
-            <th className="kd-c-kisi">
-              Kişi
-              <br />
-              Daire
-            </th>
+            {showKisi && (
+              <th className="kd-c-kisi">
+                Kişi
+                <br />
+                Daire
+              </th>
+            )}
             <th className="kd-c-odeme">
               Ödeme
               <br />
@@ -906,7 +920,7 @@ function LedgerTable({
 
               <td className="kd-ort">{row.document_number || ""}</td>
 
-              <td title={row.description || ""}>
+              <td className="kd-aciklama-hucre">
 
                 <strong>{row.category || ""}</strong>
 
@@ -923,9 +937,11 @@ function LedgerTable({
 
               </td>
 
-              <td className="kd-ort kd-kisi-hucre">
-                {row.payer || "-"}
-              </td>
+              {showKisi && (
+                <td className="kd-ort kd-kisi-hucre">
+                  {row.payer || "-"}
+                </td>
+              )}
 
               <td className="kd-ort">{row.payment_method || ""}</td>
 
@@ -933,7 +949,7 @@ function LedgerTable({
 
               <td className="kd-ort kd-no-print">
 
-                {row.source === "manual" ? (
+                {row.source === "manual" && (
 
                   <div className="kd-islem">
 
@@ -950,10 +966,6 @@ function LedgerTable({
                     </button>
 
                   </div>
-
-                ) : (
-
-                  <span className="ledger-auto-text">Sistem</span>
 
                 )}
 
@@ -972,7 +984,7 @@ function LedgerTable({
               <td />
               <td />
               <td />
-              <td />
+              {showKisi && <td />}
               <td />
               <td />
               <td className="kd-no-print" />
@@ -985,7 +997,7 @@ function LedgerTable({
 
         <tfoot>
           <tr>
-            <td colSpan={6} className="kd-toplam-etiket">
+            <td colSpan={baseColumnCount} className="kd-toplam-etiket">
               Toplam
             </td>
             <td className="kd-sag kd-toplam-deger">
