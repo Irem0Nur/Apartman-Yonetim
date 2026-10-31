@@ -59,6 +59,7 @@ function BusinessLedger() {
   const [transactions, setTransactions] = useState([]);
   const [payments, setPayments] = useState([]);
   const [cashBalance, setCashBalance] = useState(0);
+  const [periodEndBalance, setPeriodEndBalance] = useState(0);
 
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -117,6 +118,7 @@ function BusinessLedger() {
     setTransactions(transactionData || []);
     setPayments(paymentData || []);
     setCashBalance(cashData?.cash_balance || 0);
+    setPeriodEndBalance(cashData?.period_end_balance || 0);
   }
 
 
@@ -562,6 +564,13 @@ function BusinessLedger() {
           <div className="ledger-stat balance">
             <span>Güncel Kasa Bakiyesi</span>
             <strong>{formatMoney(cashBalance)} TL</strong>
+          </div>
+
+          <div className="ledger-stat period-balance">
+            <span>
+              {monthName} {year} Sonu Kasa Toplamı
+            </span>
+            <strong>{formatMoney(periodEndBalance)} TL</strong>
           </div>
 
         </section>

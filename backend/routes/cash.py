@@ -1,3 +1,5 @@
+import calendar
+from datetime import date
 from decimal import Decimal
 
 from flask import Blueprint, jsonify, request
@@ -147,6 +149,58 @@ def get_cash(apartment_id):
         + all_dues_income
         + all_other_income
         - all_expense
+    )
+
+    # =====================================================
+    # AY SONU KASA BAKİYESİ
+    #
+    # "Güncel Kasa Bakiyesi" bugüne kadarki tüm hareketleri
+    # kapsar (tüm zamanlar). Bu ise seçilen ayın SONUNA kadar
+    # (o ay dahil, sonraki aylar hariç) birikmiş toplam bakiyeyi
+    # gösterir — yöneticinin "o ay kasada toplam ne kadar para
+    # vardı" sorusuna cevap verir.
+    # =====================================================
+
+    period_last_day = calendar.monthrange(year, month)[1]
+    period_cutoff = date(year, month, period_last_day)
+
+    period_end_dues_income = sum(
+        (
+            decimal_value(payment.amount)
+            for payment in all_payments
+            if payment.payment_date
+            and payment.payment_date <= period_cutoff
+        ),
+        Decimal("0.00")
+    )
+
+    period_end_other_income = sum(
+        (
+            decimal_value(transaction.amount)
+            for transaction in all_transactions
+            if transaction.transaction_type == "income"
+            and transaction.transaction_date
+            and transaction.transaction_date <= period_cutoff
+        ),
+        Decimal("0.00")
+    )
+
+    period_end_expense = sum(
+        (
+            decimal_value(transaction.amount)
+            for transaction in all_transactions
+            if transaction.transaction_type == "expense"
+            and transaction.transaction_date
+            and transaction.transaction_date <= period_cutoff
+        ),
+        Decimal("0.00")
+    )
+
+    period_end_balance = (
+        opening_cash_balance
+        + period_end_dues_income
+        + period_end_other_income
+        - period_end_expense
     )
 
     # =====================================================
@@ -311,6 +365,10 @@ def get_cash(apartment_id):
 
         "cash_balance": float(
             cash_balance
+        ),
+
+        "period_end_balance": float(
+            period_end_balance
         ),
 
         "opening_cash_balance": float(
