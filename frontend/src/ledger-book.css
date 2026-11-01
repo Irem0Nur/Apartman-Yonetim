@@ -484,12 +484,26 @@
 
   /* Kişi/Daire sütununa (kimin ödediği) daha fazla yer açmak
      için, yazdırırken az kullanılan sütunlardan (Tarih, Belge
-     No, Ödeme Türü, Tutar) biraz genişlik alınır. */
-  .kd-c-tarih  { width: 9%; }
-  .kd-c-belge  { width: 6%; }
-  .kd-c-kisi   { width: 27%; }
-  .kd-c-odeme  { width: 7%; }
-  .kd-c-tutar  { width: 12%; }
+     No, Ödeme Türü, Tutar) biraz genişlik alınır.
+
+     Tüm sütunlara (Açıklama dahil) sabit bir yüzde verilir ve
+     toplam %100'ü geçmeyecek şekilde hesaplanır. Açıklama
+     sütunune önceden genişlik verilmiyordu ("auto" kalıyordu);
+     bu, gizlenen İşlem sütunuyla birlikte bazı yazıcı/PDF
+     motorlarında sütunların kaymasına veya Tutar sütununun hiç
+     görünmemesine yol açabiliyordu. Artık her sütun açıkça
+     ölçülendirildiği için bu belirsizlik ortadan kalkıyor. */
+  .kd-c-sira   { width: 5%; }
+  .kd-c-tarih  { width: 8%; }
+  .kd-c-belge  { width: 5%; }
+  .kd-c-kisi   { width: 24%; }
+  .kd-c-odeme  { width: 6%; }
+  .kd-c-tutar  { width: 11%; }
+  .kd-c-islem  { width: 0; }
+
+  .kd-expense .kd-c-aciklama { width: 65%; }
+  .kd-income .kd-c-aciklama  { width: 41%; }
+
   .kd-tablo tfoot td {
     height: auto;
     padding: 2px 3px;
