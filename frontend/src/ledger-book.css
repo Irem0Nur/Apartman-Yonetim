@@ -493,16 +493,19 @@
      motorlarında sütunların kaymasına veya Tutar sütununun hiç
      görünmemesine yol açabiliyordu. Artık her sütun açıkça
      ölçülendirildiği için bu belirsizlik ortadan kalkıyor. */
-  .kd-c-sira   { width: 5%; }
-  .kd-c-tarih  { width: 8%; }
-  .kd-c-belge  { width: 5%; }
-  .kd-c-kisi   { width: 24%; }
-  .kd-c-odeme  { width: 6%; }
-  .kd-c-tutar  { width: 11%; }
-  .kd-c-islem  { width: 0; }
+  .kd-tablo .kd-c-sira   { width: 6% !important; display: table-cell !important; }
+  .kd-tablo .kd-c-tarih  { width: 10% !important; display: table-cell !important; }
+  .kd-tablo .kd-c-belge  { width: 7% !important; display: table-cell !important; }
+  .kd-tablo .kd-c-kisi   { width: 24% !important; display: table-cell !important; }
+  .kd-tablo .kd-c-odeme  { width: 8% !important; display: table-cell !important; }
+  .kd-tablo .kd-c-tutar  { width: 14% !important; display: table-cell !important; }
+  .kd-tablo .kd-c-islem  { width: 0 !important; }
 
-  .kd-expense .kd-c-aciklama { width: 65%; }
-  .kd-income .kd-c-aciklama  { width: 41%; }
+  /* Gider tablosunda Kişi/Daire sütunu yok; Açıklama daha dar
+     tutularak (uzun metin olmadığı için) diğer sütunlara daha
+     rahat yer bırakılıyor. */
+  .kd-expense .kd-c-aciklama { width: 40% !important; display: table-cell !important; }
+  .kd-income .kd-c-aciklama  { width: 31% !important; display: table-cell !important; }
 
   .kd-tablo tfoot td {
     height: auto;

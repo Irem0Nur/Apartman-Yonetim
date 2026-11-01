@@ -912,15 +912,15 @@ function LedgerTable({
               key={row.source === "payment" ? row.id : `manual-${row.id}`}
             >
 
-              <td className="kd-ort">{index + 1}</td>
+              <td className="kd-ort kd-c-sira">{index + 1}</td>
 
-              <td className="kd-ort">
+              <td className="kd-ort kd-c-tarih">
                 {formatDate(row.transaction_date)}
               </td>
 
-              <td className="kd-ort">{row.document_number || ""}</td>
+              <td className="kd-ort kd-c-belge">{row.document_number || ""}</td>
 
-              <td className="kd-aciklama-hucre">
+              <td className="kd-aciklama-hucre kd-c-aciklama">
 
                 <strong>{row.category || ""}</strong>
 
@@ -934,16 +934,16 @@ function LedgerTable({
               </td>
 
               {showKisi && (
-                <td className="kd-ort kd-kisi-hucre">
+                <td className="kd-ort kd-kisi-hucre kd-c-kisi">
                   {row.payer || "-"}
                 </td>
               )}
 
-              <td className="kd-ort">{row.payment_method || ""}</td>
+              <td className="kd-ort kd-c-odeme">{row.payment_method || ""}</td>
 
-              <td className="kd-sag">{formatMoney(row.amount)}</td>
+              <td className="kd-sag kd-c-tutar">{formatMoney(row.amount)}</td>
 
-              <td className="kd-ort kd-no-print">
+              <td className="kd-ort kd-no-print kd-c-islem">
 
                 {row.source === "manual" && (
 
@@ -976,14 +976,14 @@ function LedgerTable({
 
             <tr key={`bos-${i}`} className="kd-bos">
 
-              <td className="kd-ort">{sortedRows.length + i + 1}</td>
-              <td />
-              <td />
-              <td />
-              {showKisi && <td />}
-              <td />
-              <td />
-              <td className="kd-no-print" />
+              <td className="kd-ort kd-c-sira">{sortedRows.length + i + 1}</td>
+              <td className="kd-c-tarih" />
+              <td className="kd-c-belge" />
+              <td className="kd-c-aciklama" />
+              {showKisi && <td className="kd-c-kisi" />}
+              <td className="kd-c-odeme" />
+              <td className="kd-c-tutar" />
+              <td className="kd-no-print kd-c-islem" />
 
             </tr>
 
@@ -996,10 +996,10 @@ function LedgerTable({
             <td colSpan={baseColumnCount} className="kd-toplam-etiket">
               Toplam
             </td>
-            <td className="kd-sag kd-toplam-deger">
+            <td className="kd-sag kd-toplam-deger kd-c-tutar">
               {formatMoney(total)}
             </td>
-            <td className="kd-no-print" />
+            <td className="kd-no-print kd-c-islem" />
           </tr>
         </tfoot>
 
