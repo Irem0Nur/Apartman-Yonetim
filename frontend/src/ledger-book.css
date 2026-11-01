@@ -445,5 +445,53 @@
   .kd-kitap { box-shadow: none; border-width: 2px; margin-top: 0; }
   .kd-sayfalar { grid-template-columns: 1fr 1fr; }
   .kd-mobile-hidden { display: block !important; }
-  @page { size: A4 landscape; margin: 10mm; }
+  @page { size: A4 landscape; margin: 8mm; }
+
+  /* Satırlar sade ve sıkışık görünsün, çok satırlı kayıtlarda
+     bile sayfa sayısı az tutulsun. */
+  .kd-baslik { margin-bottom: 4px; padding-bottom: 3px; }
+  .kd-baslik h2 { font-size: 1rem; letter-spacing: 1px; }
+  .kd-baslik span { font-size: 0.65rem; min-width: 0; }
+
+  .kd-sayfa-ust { margin-bottom: 3px; }
+  .kd-sayfa-ust h2 { font-size: 0.8rem; letter-spacing: 2px; }
+
+  .kd-tablo {
+    font-size: 7px;
+    line-height: 1.1;
+  }
+  .kd-tablo thead th {
+    padding: 2px;
+    font-size: 6.5px;
+    line-height: 1.1;
+  }
+  .kd-tablo th,
+  .kd-tablo td {
+    padding: 1px 3px;
+    height: auto;
+  }
+  /* Ekranda tam metin kesilmeden görünsün diye satır kaydırma
+     açıktı; yazdırırken satır sayısını (dolayısıyla sayfa
+     sayısını) düşük tutmak için tek satıra geri dönülür. */
+  .kd-tablo td.kd-aciklama-hucre,
+  .kd-tablo td.kd-kisi-hucre {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+
+  /* Kişi/Daire sütununa (kimin ödediği) daha fazla yer açmak
+     için, yazdırırken az kullanılan sütunlardan (Tarih, Belge
+     No, Ödeme Türü, Tutar) biraz genişlik alınır. */
+  .kd-c-tarih  { width: 9%; }
+  .kd-c-belge  { width: 6%; }
+  .kd-c-kisi   { width: 27%; }
+  .kd-c-odeme  { width: 7%; }
+  .kd-c-tutar  { width: 12%; }
+  .kd-tablo tfoot td {
+    height: auto;
+    padding: 2px 3px;
+  }
 }

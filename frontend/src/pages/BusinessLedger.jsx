@@ -924,10 +924,6 @@ function LedgerTable({
 
                 <strong>{row.category || ""}</strong>
 
-                {row.description && (
-                  <small className="kd-not"> — {row.description}</small>
-                )}
-
                 {(row.source === "payment" ||
                   row.source === "previous_debt_payment") && (
                   <span className="ledger-auto-badge kd-no-print">
